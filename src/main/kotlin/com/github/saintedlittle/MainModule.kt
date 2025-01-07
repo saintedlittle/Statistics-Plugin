@@ -26,6 +26,7 @@ class MainModule(
         bind(PlayerTimeTracker::class.java).toInstance(PlayerTimeTracker(scope, plugin.dataFolder.path))
         bind(MovementTracker::class.java).toInstance(MovementTracker(scope, plugin.dataFolder.path, configManager))
         bind(BedTracker::class.java).toInstance(BedTracker(plugin.dataFolder.path))
+        bind(JsonManager::class.java).to(JsonManager::class.java)
 
         bind(JsonManager::class.java).toInstance(
             JsonManager(

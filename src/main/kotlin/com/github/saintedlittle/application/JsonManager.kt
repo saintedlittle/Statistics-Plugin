@@ -14,6 +14,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.bukkit.entity.Player
 import com.github.saintedlittle.data.ItemData
+import com.google.inject.Inject
 import org.bukkit.inventory.ItemStack
 
 fun ItemStack.toItemData(): ItemData {
@@ -39,7 +40,7 @@ object JsonUtil {
 }
 
 
-class JsonManager(
+class JsonManager @Inject constructor(
     private val timeTracker: PlayerTimeTracker,
     private val bedTracker: BedTracker,
     private val movementTracker: MovementTracker
