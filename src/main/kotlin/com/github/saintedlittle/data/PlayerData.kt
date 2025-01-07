@@ -11,6 +11,9 @@ data class PlayerData(
     val potionEffects: List<PotionEffectData>,
     val location: LocationData,
     val totalTime: Long,
+    val level: Int,
+    val totalExp: Int,
+    val currentExp: Int,
     val beds: List<LocationData>,
     val movements: Map<String, List<MovementPoint>>
 )
