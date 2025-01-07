@@ -27,7 +27,7 @@ class PlayerEventListener @Inject constructor(
     fun onPlayerJoin(event: PlayerJoinEvent) {
         try {
             tracker.onPlayerJoin(event.player)
-            expTracker.update(event.player)
+            expTracker.updateExperience(event.player)
             logger.info("Player ${event.player.name} joined the server.")
         } catch (e: Exception) {
             logger.error("Error during PlayerJoinEvent for ${event.player.name}: ${e.message}", e)
@@ -57,7 +57,7 @@ class PlayerEventListener @Inject constructor(
     fun onPlayerExpChange(event: PlayerExpChangeEvent) {
         try {
             val player = event.player
-            expTracker.update(player)
+            expTracker.updateExperience(player)
             logger.debug("Player {} received {} experience.", player.name, event.amount)
         } catch (e: Exception) {
             logger.error("Error during PlayerExpChangeEvent for ${event.player.name}: ${e.message}", e)
