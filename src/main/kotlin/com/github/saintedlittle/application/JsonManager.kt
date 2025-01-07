@@ -14,6 +14,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.bukkit.entity.Player
 import com.github.saintedlittle.data.ItemData
+import com.github.saintedlittle.domain.ExpTracker
 import com.google.inject.Inject
 import org.bukkit.inventory.ItemStack
 
@@ -43,7 +44,8 @@ object JsonUtil {
 class JsonManager @Inject constructor(
     private val timeTracker: PlayerTimeTracker,
     private val bedTracker: BedTracker,
-    private val movementTracker: MovementTracker
+    private val movementTracker: MovementTracker,
+    private val expTracker: ExpTracker
 ) {
 
     fun createPlayerJson(player: Player): String {
@@ -56,6 +58,7 @@ class JsonManager @Inject constructor(
         val totalTime = timeTracker.getTotalPlayTime(player)
         val beds = bedTracker.getBeds(player).map { LocationData.from(it) }
         val movements = movementTracker.getMovements(player)
+        val exp = expTracker.getExp(player)
 
         return PlayerData(
             inventory = player.inventory.contents.filterNotNull().map { it.toItemData() },
@@ -68,11 +71,15 @@ class JsonManager @Inject constructor(
             location = LocationData.from(player.location),
             totalTime = totalTime,
             beds = beds,
+            level = exp.first,
+            totalExp = exp.second,
+            currentExp = exp.third,
             movements = movements
         )
     }
 
     private fun clearPlayerData(player: Player) {
+        expTracker.clearExp(player)
         bedTracker.clearBeds(player)
         movementTracker.clearMovements(player)
         timeTracker.onPlayerExit(player)

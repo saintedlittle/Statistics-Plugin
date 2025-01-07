@@ -3,10 +3,12 @@ package com.github.saintedlittle
 import com.github.saintedlittle.application.ConfigManager
 import com.github.saintedlittle.application.JsonManager
 import com.github.saintedlittle.domain.BedTracker
+import com.github.saintedlittle.domain.ExpTracker
 import com.github.saintedlittle.domain.MovementTracker
 import com.github.saintedlittle.domain.PlayerTimeTracker
 import com.github.saintedlittle.listeners.BlockListener
 import com.github.saintedlittle.listeners.MovementListener
+import com.github.saintedlittle.listeners.PlayerExpListener
 import com.github.saintedlittle.listeners.PlayerListener
 import com.google.inject.AbstractModule
 import com.google.inject.Inject
@@ -39,6 +41,7 @@ class MainModule(
         val playerSessionStartCache = createCache<UUID, java.lang.Long>(cacheManager, "playerSessionStart", 1000)
         val playerMovementsCache = createCache<UUID, String>(cacheManager, "playerMovements", 70000)
         val playerBedsCache = createCache<UUID, String>(cacheManager, "playerBeds", 7000)
+        val playerExpCache = createCache<UUID, Triple<Int, Int, Int>>(cacheManager, "playerExp", 7000)
 
         bind(Plugin::class.java).toInstance(plugin)
         bind(CoroutineScope::class.java).toInstance(scope)
@@ -55,18 +58,23 @@ class MainModule(
         bind(BedTracker::class.java).toInstance(
             BedTracker(playerBedsCache)
         )
+        bind(ExpTracker::class.java).toInstance(
+            ExpTracker(playerExpCache)
+        )
 
         bind(JsonManager::class.java).toInstance(
             JsonManager(
                 PlayerTimeTracker(scope, playerTimesCache, playerSessionStartCache),
                 BedTracker(playerBedsCache),
-                MovementTracker(scope, playerMovementsCache, configManager)
+                MovementTracker(scope, playerMovementsCache, configManager),
+                ExpTracker(playerExpCache)
             )
         )
 
         bind(MovementListener::class.java).toProvider(MovementListenerProvider::class.java)
         bind(PlayerListener::class.java).toProvider(PlayerListenerProvider::class.java)
         bind(BlockListener::class.java).toProvider(BlockListenerProvider::class.java)
+        bind(PlayerExpListener::class.java).toProvider(PlayerExpListenerProvider::class.java)
 
     }
 
@@ -113,5 +121,14 @@ class BlockListenerProvider @Inject constructor(
 ) : Provider<BlockListener> {
     override fun get(): BlockListener {
         return BlockListener(bedTracker, logger)
+    }
+}
+
+class PlayerExpListenerProvider @Inject constructor(
+    private val expTracker: ExpTracker,
+    private val logger: Logger
+) : Provider<PlayerExpListener> {
+    override fun get(): PlayerExpListener {
+        return PlayerExpListener(expTracker, logger)
     }
 }
