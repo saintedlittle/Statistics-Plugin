@@ -1,9 +1,6 @@
 package com.github.saintedlittle
 
 import com.github.saintedlittle.application.ConfigManager
-import com.github.saintedlittle.domain.BedTracker
-import com.github.saintedlittle.domain.MovementTracker
-import com.github.saintedlittle.domain.PlayerTimeTracker
 import com.github.saintedlittle.utils.ListenerRegistrar
 import com.google.inject.Guice
 import com.google.inject.Injector
@@ -12,7 +9,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import org.bukkit.plugin.java.JavaPlugin
 import org.ehcache.CacheManager
-import kotlin.jvm.java
 
 class Main : JavaPlugin() {
 

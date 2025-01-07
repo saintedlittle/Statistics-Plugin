@@ -9,6 +9,8 @@ import com.github.saintedlittle.listeners.BlockListener
 import com.github.saintedlittle.listeners.MovementListener
 import com.github.saintedlittle.listeners.PlayerListener
 import com.google.inject.AbstractModule
+import com.google.inject.Inject
+import com.google.inject.Provider
 import kotlinx.coroutines.CoroutineScope
 import org.bukkit.plugin.Plugin
 import org.ehcache.Cache
@@ -21,11 +23,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.util.*
-import kotlin.jvm.java
-import com.google.inject.Inject
-import com.google.inject.Provider
-
-import javax.inject.Singleton
 
 class MainModule(
     private val plugin: Plugin,
@@ -34,25 +31,21 @@ class MainModule(
 ) : AbstractModule() {
 
     override fun configure() {
-        // Создание CacheManager
         val cacheManager: CacheManager = CacheManagerBuilder.newCacheManagerBuilder()
             .with(CacheManagerBuilder.persistence(File(plugin.dataFolder, "ehcache")))
             .build(true)
 
-        // Конфигурации кэшей
         val playerTimesCache = createCache<UUID, java.lang.Long>(cacheManager, "playerTimes", 1000)
         val playerSessionStartCache = createCache<UUID, java.lang.Long>(cacheManager, "playerSessionStart", 1000)
         val playerMovementsCache = createCache<UUID, String>(cacheManager, "playerMovements", 70000)
         val playerBedsCache = createCache<UUID, String>(cacheManager, "playerBeds", 7000)
 
-        // Привязки базовых зависимостей
         bind(Plugin::class.java).toInstance(plugin)
         bind(CoroutineScope::class.java).toInstance(scope)
         bind(ConfigManager::class.java).toInstance(configManager)
         bind(Logger::class.java).toInstance(LoggerFactory.getLogger(plugin::class.java))
         bind(CacheManager::class.java).toInstance(cacheManager)
 
-        // Привязки для трекеров
         bind(PlayerTimeTracker::class.java).toInstance(
             PlayerTimeTracker(scope, playerTimesCache, playerSessionStartCache)
         )
@@ -63,7 +56,6 @@ class MainModule(
             BedTracker(playerBedsCache)
         )
 
-        // JsonManager
         bind(JsonManager::class.java).toInstance(
             JsonManager(
                 PlayerTimeTracker(scope, playerTimesCache, playerSessionStartCache),
@@ -72,14 +64,12 @@ class MainModule(
             )
         )
 
-        // Привязки для слушателей (автоматическая инъекция)
         bind(MovementListener::class.java).toProvider(MovementListenerProvider::class.java)
         bind(PlayerListener::class.java).toProvider(PlayerListenerProvider::class.java)
         bind(BlockListener::class.java).toProvider(BlockListenerProvider::class.java)
 
     }
 
-    // Вспомогательный метод для создания кэша
     private inline fun <reified K, reified V> createCache(
         cacheManager: CacheManager,
         cacheName: String,
