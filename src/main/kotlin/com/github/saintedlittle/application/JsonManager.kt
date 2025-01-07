@@ -1,17 +1,43 @@
 package com.github.saintedlittle.application
 
-import com.github.saintedlittle.data.*
+
+import com.github.saintedlittle.data.ArmorSlot
+import com.github.saintedlittle.data.LocationData
+import com.github.saintedlittle.data.PlayerData
 import com.github.saintedlittle.domain.BedTracker
 import com.github.saintedlittle.domain.MovementTracker
 import com.github.saintedlittle.domain.PlayerTimeTracker
-import com.github.saintedlittle.extensions.*
-import org.bukkit.Bukkit
-import org.bukkit.Location
+import com.github.saintedlittle.extensions.collectAttributes
+import com.github.saintedlittle.extensions.collectPotionEffects
+import com.github.saintedlittle.extensions.collectStatistics
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.bukkit.entity.Player
+import com.github.saintedlittle.data.ItemData
 import org.bukkit.inventory.ItemStack
-import java.util.concurrent.Callable
-import java.util.concurrent.Executors
-import java.util.logging.Level
+
+fun ItemStack.toItemData(): ItemData {
+    return ItemData(
+        type = type.name,
+        minecraftId = type.key.toString(),
+        amount = amount,
+        displayName = itemMeta?.displayName ?: "unknown"
+    )
+}
+
+
+object JsonUtil {
+    val json = Json { prettyPrint = true }
+
+    inline fun <reified T> toJson(obj: T): String {
+        return json.encodeToString(obj)
+    }
+
+    inline fun <reified T> fromJson(jsonString: String): T {
+        return json.decodeFromString(jsonString)
+    }
+}
+
 
 class JsonManager(
     private val timeTracker: PlayerTimeTracker,
@@ -19,75 +45,36 @@ class JsonManager(
     private val movementTracker: MovementTracker
 ) {
 
-    private val executorService = Executors.newFixedThreadPool(4)
-
-    fun createPlayerJson(player: Player): String? {
-        val future = executorService.submit(Callable {
-            try {
-                val playerData = collectPlayerData(player)
-                clearPlayerData(player)
-
-                playerData.toJson().toString()
-            } catch (e: Exception) {
-                Bukkit.getLogger().log(Level.SEVERE, "Error processing player JSON", e)
-                null
-            }
-        })
-
-        return try {
-            future.get()
-        } catch (e: Exception) {
-            Bukkit.getLogger().log(Level.SEVERE, "Error getting future result", e)
-            null
-        }
+    fun createPlayerJson(player: Player): String {
+        val playerData = collectPlayerData(player)
+        clearPlayerData(player)
+        return JsonUtil.toJson(playerData)
     }
 
     private fun collectPlayerData(player: Player): PlayerData {
         val totalTime = timeTracker.getTotalPlayTime(player)
-        val beds = bedTracker.getBeds(player)
+        val beds = bedTracker.getBeds(player).map { LocationData.from(it) }
         val movements = movementTracker.getMovements(player)
 
         return PlayerData(
             inventory = player.inventory.contents.filterNotNull().map { it.toItemData() },
             armor = player.inventory.armorContents.mapIndexedNotNull { index, item ->
-                val slotName = ArmorSlot.entries.getOrNull(index)?.name ?: "unknown"
-                val itemData = item?.toItemData() ?: "none"
-                slotName to itemData
+                ArmorSlot.entries.getOrNull(index)?.name?.let { it to (item?.toItemData() ?: ItemData.empty()) }
             }.toMap(),
             statistics = player.collectStatistics(),
             attributes = player.collectAttributes(),
             potionEffects = player.collectPotionEffects(),
-            location = player.location.toLocationData(),
+            location = LocationData.from(player.location),
             totalTime = totalTime,
-            beds = beds.map { it.toLocationData() },
+            beds = beds,
             movements = movements
         )
     }
 
     private fun clearPlayerData(player: Player) {
-        // Очистка данных синхронно
         bedTracker.clearBeds(player)
         movementTracker.clearMovements(player)
         timeTracker.onPlayerExit(player)
     }
-
-    private fun Location.toLocationData(): LocationData {
-        return LocationData.from(
-            world = world?.name,
-            x = x,
-            y = y,
-            z = z,
-            yaw = yaw,
-            pitch = pitch
-        )
-    }
-
-    private fun ItemStack.toItemData(): ItemData {
-        return ItemData.from(
-            type = type.name,
-            minecraftId = type.key.toString(),
-            amount = amount,
-            displayName = itemMeta?.displayName
-        )
-    }
 }
+

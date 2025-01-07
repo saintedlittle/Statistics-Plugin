@@ -17,10 +17,13 @@ repositories {
 }
 
 dependencies {
+    implementation("dev.misfitlabs.kotlinguice4:kotlin-guice:3.0.0")
+    implementation("org.reflections:reflections:0.10.2")
+
     compileOnly("io.papermc.paper:paper-api:1.20.1-R0.1-SNAPSHOT")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.10")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
     implementation("org.ehcache:ehcache:3.10.6")
 }
 

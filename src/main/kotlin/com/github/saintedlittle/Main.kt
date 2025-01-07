@@ -1,8 +1,12 @@
 package com.github.saintedlittle
 
-import com.github.saintedlittle.application.JsonManager
-import com.github.saintedlittle.domain.*
-import com.github.saintedlittle.listeners.*
+import com.github.saintedlittle.application.ConfigManager
+import com.github.saintedlittle.domain.BedTracker
+import com.github.saintedlittle.domain.MovementTracker
+import com.github.saintedlittle.domain.PlayerTimeTracker
+import com.github.saintedlittle.utils.ListenerRegistrar
+import com.google.inject.Guice
+import com.google.inject.Injector
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -11,36 +15,28 @@ import java.io.File
 
 class Main : JavaPlugin() {
 
+    private lateinit var injector: Injector
     private val scope = CoroutineScope(Dispatchers.IO)
-    private lateinit var movementTracker: MovementTracker
-    private lateinit var timeTracker: PlayerTimeTracker
-    private lateinit var bedTracker: BedTracker
 
     override fun onEnable() {
         if (!dataFolder.exists()) dataFolder.mkdir()
+
         val configFile = File(dataFolder, "config.json")
-        if (!configFile.exists()) ConfigManager.saveDefaultConfig(configFile)
-        ConfigManager.init(configFile)
+        val configManager = ConfigManager(configFile)
 
-        timeTracker = PlayerTimeTracker(scope, dataFolder.path)
-        movementTracker = MovementTracker(scope, dataFolder.path)
-        bedTracker = BedTracker(dataFolder.path)
+        injector = Guice.createInjector(MainModule(this, scope, configManager))
 
-        val jsonManager = JsonManager(timeTracker, bedTracker, movementTracker)
+        ListenerRegistrar.registerAll(this, injector)
 
-        server.pluginManager.registerEvents(PlayerListener(timeTracker, jsonManager, scope), this)
-        server.pluginManager.registerEvents(BlockListener(bedTracker), this)
-        server.pluginManager.registerEvents(MovementListener(movementTracker), this)
-
-        logger.info("Plugin enabled.")
+        logger.info("Plugin successfully enabled.")
     }
 
     override fun onDisable() {
-        movementTracker.close()
-        timeTracker.close()
-        bedTracker.close()
+        injector.getInstance(MovementTracker::class.java).close()
+        injector.getInstance(PlayerTimeTracker::class.java).close()
+        injector.getInstance(BedTracker::class.java).close()
         scope.cancel()
-        logger.info("Plugin disabled.")
-    }
 
+        logger.info("Plugin successfully disabled.")
+    }
 }

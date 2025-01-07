@@ -1,8 +1,10 @@
 package com.github.saintedlittle.domain
 
-import com.github.saintedlittle.ConfigManager
+import com.github.saintedlittle.application.ConfigManager
+import com.github.saintedlittle.data.MovementPoint
 import com.google.gson.JsonParser
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.bukkit.Location
 import org.bukkit.entity.Player
 import org.ehcache.Cache
@@ -14,7 +16,11 @@ import org.ehcache.config.units.MemoryUnit
 import java.io.File
 import java.util.*
 
-class MovementTracker(private val scope: CoroutineScope, pluginFolder: String) {
+class MovementTracker(
+    private val scope: CoroutineScope,
+    pluginFolder: String,
+    private val configManager: ConfigManager
+) {
 
     private val cacheManager: CacheManager = CacheManagerBuilder.newCacheManagerBuilder()
         .with(CacheManagerBuilder.persistence(File(pluginFolder, "ehcache_movements")))
@@ -42,7 +48,10 @@ class MovementTracker(private val scope: CoroutineScope, pluginFolder: String) {
             val movementsInWorld = movementsByWorld.computeIfAbsent(worldName) { mutableListOf() }
             val lastPoint = movementsInWorld.lastOrNull()
 
-            if (lastPoint == null || location.distance(lastPoint.toLocation(location.world!!)) >= ConfigManager.minDistanceBetweenMovements) {
+            val minDistance = configManager.get("minDistanceBetweenMovements")?.toDoubleOrNull()
+                ?: DEFAULT_MIN_DISTANCE
+
+            if (lastPoint == null || location.distance(lastPoint.toLocation(location.world!!)) >= minDistance) {
                 movementsInWorld.add(MovementPoint(location.x, location.y, location.z, System.currentTimeMillis()))
                 playerMovements.put(playerId, serializeMovements(movementsByWorld))
             }
@@ -63,7 +72,7 @@ class MovementTracker(private val scope: CoroutineScope, pluginFolder: String) {
 
     private fun serializeMovements(movements: Map<String, List<MovementPoint>>): String {
         return movements.entries.joinToString(prefix = "{", postfix = "}") { (world, points) ->
-            "\"$world\":${points.map { it.toJsonObject() }}"
+            """"$world":[${points.joinToString(",") { it.toJsonObject() }}]"""
         }
     }
 
@@ -89,19 +98,8 @@ class MovementTracker(private val scope: CoroutineScope, pluginFolder: String) {
     fun close() {
         cacheManager.close()
     }
-}
 
-data class MovementPoint(
-    val x: Double,
-    val y: Double,
-    val z: Double,
-    val timestamp: Long
-) {
-    fun toJsonObject(): String {
-        return """{"x":$x,"y":$y,"z":$z,"timestamp":$timestamp}"""
-    }
-
-    fun toLocation(world: org.bukkit.World): Location {
-        return Location(world, x, y, z)
+    companion object {
+        private const val DEFAULT_MIN_DISTANCE = 2.0
     }
 }
