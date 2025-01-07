@@ -4,7 +4,6 @@ import com.github.saintedlittle.application.ConfigManager
 import com.github.saintedlittle.data.MovementPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.bukkit.Location
