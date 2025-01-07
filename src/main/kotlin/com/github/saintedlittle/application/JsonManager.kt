@@ -79,6 +79,7 @@ class JsonManager @Inject constructor(
     }
 
     private fun clearPlayerData(player: Player) {
+        expTracker.clearExp(player)
         bedTracker.clearBeds(player)
         movementTracker.clearMovements(player)
         timeTracker.onPlayerExit(player)

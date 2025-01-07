@@ -23,6 +23,10 @@ class ExpTracker(
         return playerExp.get(playerId) ?: Triple(0, 0, 0)
     }
 
+    fun clearExp(player: Player) {
+        playerExp.remove(player.uniqueId)
+    }
+
     private fun getCurrentExp(player: Player): Int {
         val level = player.level
         return getExpAtLevel(level) + Math.round(getExpToLevelUp(level) * player.exp)
