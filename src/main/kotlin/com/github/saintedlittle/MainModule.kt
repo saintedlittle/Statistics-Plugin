@@ -8,11 +8,11 @@ import com.github.saintedlittle.domain.MovementTracker
 import com.github.saintedlittle.domain.PlayerTimeTracker
 import com.github.saintedlittle.listeners.BlockListener
 import com.github.saintedlittle.listeners.MovementListener
-import com.github.saintedlittle.listeners.PlayerExpListener
-import com.github.saintedlittle.listeners.PlayerListener
+import com.github.saintedlittle.listeners.PlayerEventListener
+import com.github.saintedlittle.providers.BlockListenerProvider
+import com.github.saintedlittle.providers.MovementListenerProvider
+import com.github.saintedlittle.providers.PlayerEventListenerProvider
 import com.google.inject.AbstractModule
-import com.google.inject.Inject
-import com.google.inject.Provider
 import kotlinx.coroutines.CoroutineScope
 import org.bukkit.plugin.Plugin
 import org.ehcache.Cache
@@ -72,9 +72,8 @@ class MainModule(
         )
 
         bind(MovementListener::class.java).toProvider(MovementListenerProvider::class.java)
-        bind(PlayerListener::class.java).toProvider(PlayerListenerProvider::class.java)
         bind(BlockListener::class.java).toProvider(BlockListenerProvider::class.java)
-        bind(PlayerExpListener::class.java).toProvider(PlayerExpListenerProvider::class.java)
+        bind(PlayerEventListener::class.java).toProvider(PlayerEventListenerProvider::class.java)
 
     }
 
@@ -91,44 +90,5 @@ class MainModule(
                 ResourcePoolsBuilder.heap(heapSize).disk(5, MemoryUnit.GB, true)
             )
         )
-    }
-}
-
-
-class MovementListenerProvider @Inject constructor(
-    private val movementTracker: MovementTracker,
-    private val logger: Logger
-) : Provider<MovementListener> {
-    override fun get(): MovementListener {
-        return MovementListener(movementTracker, logger)
-    }
-}
-
-class PlayerListenerProvider @Inject constructor(
-    private val tracker: PlayerTimeTracker,
-    private val jsonManager: JsonManager,
-    private val scope: CoroutineScope,
-    private val logger: Logger
-) : Provider<PlayerListener> {
-    override fun get(): PlayerListener {
-        return PlayerListener(tracker, jsonManager, scope, logger)
-    }
-}
-
-class BlockListenerProvider @Inject constructor(
-    private val bedTracker: BedTracker,
-    private val logger: Logger
-) : Provider<BlockListener> {
-    override fun get(): BlockListener {
-        return BlockListener(bedTracker, logger)
-    }
-}
-
-class PlayerExpListenerProvider @Inject constructor(
-    private val expTracker: ExpTracker,
-    private val logger: Logger
-) : Provider<PlayerExpListener> {
-    override fun get(): PlayerExpListener {
-        return PlayerExpListener(expTracker, logger)
     }
 }

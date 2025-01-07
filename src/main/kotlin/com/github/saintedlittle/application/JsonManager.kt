@@ -16,17 +16,20 @@ import org.bukkit.entity.Player
 import com.github.saintedlittle.data.ItemData
 import com.github.saintedlittle.domain.ExpTracker
 import com.google.inject.Inject
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import org.bukkit.inventory.ItemStack
 
 fun ItemStack.toItemData(): ItemData {
+    val serializer = PlainTextComponentSerializer.plainText()
+    val displayName = itemMeta?.displayName()?.let { serializer.serialize(it) } ?: "unknown"
+
     return ItemData(
         type = type.name,
         minecraftId = type.key.toString(),
         amount = amount,
-        displayName = itemMeta?.displayName ?: "unknown"
+        displayName = displayName
     )
 }
-
 
 object JsonUtil {
     val json = Json { prettyPrint = true }
@@ -35,9 +38,9 @@ object JsonUtil {
         return json.encodeToString(obj)
     }
 
-    inline fun <reified T> fromJson(jsonString: String): T {
-        return json.decodeFromString(jsonString)
-    }
+//    inline fun <reified T> fromJson(jsonString: String): T {
+//        return json.decodeFromString(jsonString)
+//    }
 }
 
 
@@ -58,7 +61,7 @@ class JsonManager @Inject constructor(
         val totalTime = timeTracker.getTotalPlayTime(player)
         val beds = bedTracker.getBeds(player).map { LocationData.from(it) }
         val movements = movementTracker.getMovements(player)
-        val exp = expTracker.getExp(player)
+        val exp = expTracker.getExperience(player)
 
         return PlayerData(
             inventory = player.inventory.contents.filterNotNull().map { it.toItemData() },
@@ -79,7 +82,7 @@ class JsonManager @Inject constructor(
     }
 
     private fun clearPlayerData(player: Player) {
-        expTracker.clearExp(player)
+        expTracker.clearExperience(player)
         bedTracker.clearBeds(player)
         movementTracker.clearMovements(player)
         timeTracker.onPlayerExit(player)

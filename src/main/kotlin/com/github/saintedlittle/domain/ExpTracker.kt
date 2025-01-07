@@ -6,49 +6,50 @@ import java.util.*
 import kotlin.math.pow
 
 class ExpTracker(
-    private val playerExp: Cache<UUID, Triple<Int, Int, Int>>
+    private val experienceCache: Cache<UUID, Triple<Int, Int, Int>>
 ) {
-    fun update(player: Player) {
+
+    fun updateExperience(player: Player) {
         val playerId = player.uniqueId
-
         val level = player.level
-        val totalExp = player.totalExperience
-        val currentExp = getCurrentExp(player)
+        val totalExperience = player.totalExperience
+        val currentExperience = calculateCurrentExperience(player)
 
-        playerExp.put(playerId, Triple(level, totalExp, currentExp))
+        experienceCache.put(playerId, Triple(level, totalExperience, currentExperience))
     }
 
-    fun getExp(player: Player): Triple<Int, Int, Int> {
-        val playerId = player.uniqueId
-        return playerExp.get(playerId) ?: Triple(0, 0, 0)
+    fun getExperience(player: Player): Triple<Int, Int, Int> {
+        return experienceCache.get(player.uniqueId) ?: Triple(0, 0, 0)
     }
 
-    fun clearExp(player: Player) {
-        playerExp.remove(player.uniqueId)
+    fun clearExperience(player: Player) {
+        experienceCache.remove(player.uniqueId)
     }
 
-    private fun getCurrentExp(player: Player): Int {
+    private fun calculateCurrentExperience(player: Player): Int {
         val level = player.level
-        return getExpAtLevel(level) + Math.round(getExpToLevelUp(level) * player.exp)
+        val progressToNextLevel = player.exp
+        return experienceAtLevel(level) + (experienceToNextLevel(level) * progressToNextLevel).toInt()
     }
 
-    private fun getExpToLevelUp(level: Int): Int {
-        return if (level <= 15) {
-            2 * level + 7
-        } else if (level <= 30) {
-            5 * level - 38
-        } else {
-            9 * level - 158
+    private fun experienceToNextLevel(level: Int): Int {
+        return when {
+            level <= 15 -> 2 * level + 7
+            level <= 30 -> 5 * level - 38
+            else -> 9 * level - 158
         }
     }
 
-    private fun getExpAtLevel(level: Int): Int {
-        return if (level <= 16) {
-            (level.toDouble().pow(2.0) + 6 * level).toInt()
-        } else if (level <= 31) {
-            (2.5 * level.toDouble().pow(2.0) - 40.5 * level + 360.0).toInt()
-        } else {
-            (4.5 * level.toDouble().pow(2.0) - 162.5 * level + 2220.0).toInt()
+    private fun experienceAtLevel(level: Int): Int {
+        return when {
+            level <= 15 -> (level.toDouble().pow(2.0) + 6 * level).toInt()
+            level <= 30 -> (2.5 * level.toDouble().pow(2.0) - 40.5 * level + 360).toInt()
+            else -> (4.5 * level.toDouble().pow(2.0) - 162.5 * level + 2220).toInt()
         }
+    }
+
+    fun formatExperienceData(player: Player): String {
+        val (level, totalExp, currentExp) = getExperience(player)
+        return "Player: ${player.name}, Level: $level, Total Exp: $totalExp, Current Exp: $currentExp"
     }
 }
