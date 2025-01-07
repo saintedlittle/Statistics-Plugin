@@ -20,9 +20,7 @@ class Main : JavaPlugin() {
 
     override fun onEnable() {
         if (!dataFolder.exists()) dataFolder.mkdir()
-
-        val configFile = File(dataFolder, "config.json")
-        val configManager = ConfigManager(configFile)
+        val configManager = ConfigManager(dataFolder)
 
         injector = Guice.createInjector(MainModule(this, scope, configManager))
 

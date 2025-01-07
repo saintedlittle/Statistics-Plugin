@@ -1,6 +1,5 @@
 package com.github.saintedlittle.data
 
-import com.github.saintedlittle.domain.MovementPoint
 import kotlinx.serialization.Serializable
 
 @Serializable
