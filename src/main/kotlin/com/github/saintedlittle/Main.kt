@@ -11,6 +11,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import org.bukkit.plugin.java.JavaPlugin
+import org.ehcache.CacheManager
+import kotlin.jvm.java
 
 class Main : JavaPlugin() {
 
@@ -29,9 +31,7 @@ class Main : JavaPlugin() {
     }
 
     override fun onDisable() {
-        injector.getInstance(MovementTracker::class.java).close()
-        injector.getInstance(PlayerTimeTracker::class.java).close()
-        injector.getInstance(BedTracker::class.java).close()
+        injector.getInstance(CacheManager::class.java).close()
         scope.cancel()
 
         logger.info("Plugin successfully disabled.")

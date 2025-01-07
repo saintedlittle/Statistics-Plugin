@@ -20,12 +20,10 @@ class MovementListener @Inject constructor(
         try {
             val player = event.player
             val to = event.to
-
             movementTracker.addMovement(player, to)
-
             logger.debug("Player {} moved to {}.", player.name, to)
         } catch (e: Exception) {
-            logger.error("Error handling player movement: ${e.message}", e)
+            logger.error("Error handling player movement: {}", e.message, e)
         }
     }
 
@@ -34,12 +32,10 @@ class MovementListener @Inject constructor(
         try {
             val player = event.player
             val to = event.to
-
             movementTracker.addMovement(player, to)
-
             logger.debug("Player {} teleported to {}.", player.name, to)
         } catch (e: Exception) {
-            logger.error("Error handling player teleport: ${e.message}", e)
+            logger.error("Error handling player teleport: {}", e.message, e)
         }
     }
 }

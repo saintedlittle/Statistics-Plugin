@@ -8,39 +8,13 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.bukkit.entity.Player
 import org.ehcache.Cache
-import org.ehcache.CacheManager
-import org.ehcache.config.builders.CacheConfigurationBuilder
-import org.ehcache.config.builders.CacheManagerBuilder
-import org.ehcache.config.builders.ResourcePoolsBuilder
-import java.io.File
 import java.util.*
 
-class PlayerTimeTracker(private val scope: CoroutineScope, pluginFolder: String) {
-
-    private val cacheManager: CacheManager = CacheManagerBuilder.newCacheManagerBuilder()
-        .with(CacheManagerBuilder.persistence(File(pluginFolder, "ehcache_player_times")))
-        .withCache(
-            "playerTimes",
-            CacheConfigurationBuilder.newCacheConfigurationBuilder(
-                UUID::class.java,
-                java.lang.Long::class.java,
-                ResourcePoolsBuilder.heap(1000)
-            )
-        )
-        .withCache(
-            "playerSessionStart",
-            CacheConfigurationBuilder.newCacheConfigurationBuilder(
-                UUID::class.java,
-                java.lang.Long::class.java,
-                ResourcePoolsBuilder.heap(1000)
-            )
-        )
-        .build(true)
-
-    private val playerTimes: Cache<UUID, java.lang.Long> =
-        cacheManager.getCache("playerTimes", UUID::class.java, java.lang.Long::class.java)
-    private val playerSessionStart: Cache<UUID, java.lang.Long> =
-        cacheManager.getCache("playerSessionStart", UUID::class.java, java.lang.Long::class.java)
+class PlayerTimeTracker(
+    scope: CoroutineScope,
+    private val playerTimes: Cache<UUID, java.lang.Long>,
+    private val playerSessionStart: Cache<UUID, java.lang.Long>
+) {
 
     init {
         scope.launch {
@@ -89,7 +63,4 @@ class PlayerTimeTracker(private val scope: CoroutineScope, pluginFolder: String)
         return totalPlayTime + currentSessionTime
     }
 
-    fun close() {
-        cacheManager.close()
-    }
 }

@@ -16,16 +16,20 @@ class BlockListener @Inject constructor(
 ) : Listener {
 
     companion object {
-        private val bedMaterials: Set<Material> = Material.entries
-            .filter { it.name.contains("BED", ignoreCase = true) }
-            .toSet()
+        private val bedMaterials: Set<Material> by lazy {
+            Material.entries.filter { it.name.contains("BED", ignoreCase = true) }.toSet()
+        }
     }
 
     @EventHandler
     fun onBlockPlace(event: BlockPlaceEvent) {
         if (event.block.type in bedMaterials) {
-            bedTracker.addBed(event.player, event.block.location)
-            logger.info("Player ${event.player.name} placed a bed at ${event.block.location}.")
+            try {
+                bedTracker.addBed(event.player, event.block.location)
+                logger.info("Player {} placed a bed at {}.", event.player.name, event.block.location)
+            } catch (e: Exception) {
+                logger.error("Error processing block placement: {}", e.message, e)
+            }
         }
     }
 }
