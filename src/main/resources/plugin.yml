@@ -13,8 +13,7 @@ commands:
 permissions:
   statistics.synchronize:
     description: Allows the use of the /synchronize command.
-    default: false
+    default: true
 
   statistics.synchronize.other:
     description: Allows the /synchronize command to be used on other players.
-    default: true

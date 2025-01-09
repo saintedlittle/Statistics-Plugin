@@ -35,7 +35,7 @@ class PlayerTimeTracker(
         val sessionStart = playerSessionStart.get(playerId)
         if (sessionStart != null) {
             val sessionTime = System.nanoTime() - sessionStart.toKotlinLong()
-            val totalPlayTime = (playerTimes.get(playerId)).toKotlinLong()
+            val totalPlayTime = playerTimes.get(playerId).let { it?.toKotlinLong() } ?: 0L
             playerTimes.put(playerId, (totalPlayTime + sessionTime).toJavaLong())
             playerSessionStart.remove(playerId)
         }
@@ -46,7 +46,7 @@ class PlayerTimeTracker(
             val playerId = entry.key
             val sessionStart = (entry.value).toKotlinLong()
             val sessionTime = System.nanoTime() - sessionStart
-            val totalPlayTime = (playerTimes.get(playerId)).toKotlinLong()
+            val totalPlayTime = playerTimes.get(playerId).let { it?.toKotlinLong() } ?: 0L
             playerTimes.put(playerId, (totalPlayTime + sessionTime).toJavaLong())
             playerSessionStart.put(playerId, (System.nanoTime()).toJavaLong())
         }
@@ -54,7 +54,7 @@ class PlayerTimeTracker(
 
     fun getTotalPlayTime(player: Player): Long {
         val playerId = player.uniqueId
-        val totalPlayTime = (playerTimes.get(playerId)).toKotlinLong()
+        val totalPlayTime = playerTimes.get(playerId).let { it?.toKotlinLong() } ?: 0L
         val currentSessionTime = playerSessionStart.get(playerId)?.let {
             System.nanoTime() - it.toKotlinLong()
         } ?: 0L
