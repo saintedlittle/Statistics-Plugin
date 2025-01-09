@@ -1,9 +1,9 @@
 package com.github.saintedlittle.utils
 
 import com.github.saintedlittle.annotations.AutoRegisterCommand
-import com.github.saintedlittle.commands.NamedCommand
 import com.google.inject.Injector
 import org.bukkit.Bukkit
+import org.bukkit.command.CommandExecutor
 import org.bukkit.plugin.Plugin
 import org.reflections.Reflections
 
@@ -12,8 +12,10 @@ object CommandRegistrar {
         val reflections = Reflections("com.github.saintedlittle.commands")
         val commands = reflections.getTypesAnnotatedWith(AutoRegisterCommand::class.java)
         commands.forEach { commandClass ->
-            val command = injector.getInstance(commandClass) as NamedCommand
-            Bukkit.getPluginCommand(command.getCommand())?.setExecutor(command)
+            val instance = injector.getInstance(commandClass)
+            val commandRegister = instance as AutoRegisterCommand
+            val commandExecutor = instance as CommandExecutor
+            Bukkit.getPluginCommand(commandRegister.command)?.setExecutor(commandExecutor)
             plugin.logger.info("Registered command: ${commandClass.simpleName}")
         }
     }

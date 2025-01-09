@@ -1,3 +1,5 @@
+minDistanceBetweenMovements: 2.0
+
 kafka:
   ip: 'localhost'
   port: 9092

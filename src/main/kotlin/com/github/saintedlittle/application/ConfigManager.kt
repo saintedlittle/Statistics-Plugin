@@ -1,23 +1,18 @@
 package com.github.saintedlittle.application
 
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
+import org.bukkit.configuration.file.YamlConfiguration
 import java.io.File
 import java.util.*
 
-class ConfigManager(dataFolder: File) {
-    private var config: JsonObject
+class ConfigManager(private val dataFolder: File) {
+    val config: YamlConfiguration
 
     val kafkaProducerConfig: Properties
         get() = getKafkaConfig("kafka-producer-config.json")
 
     init {
-        val configFile = File(dataFolder, "config.json")
-        if (!configFile.exists()) saveDefaultConfig(configFile)
-        config = JsonParser.parseReader(configFile.reader()).asJsonObject
+        config = loadOrCreate("config.yml")
     }
-
-    fun get(key: String): String? = config.get(key)?.asString
 
     private fun getKafkaConfig(fileName: String): Properties {
         val resourcePath = this::class.java.classLoader.getResource(fileName)
@@ -33,10 +28,18 @@ class ConfigManager(dataFolder: File) {
         return props
     }
 
-    private fun saveDefaultConfig(file: File) {
-        val defaultConfig = JsonObject().apply {
-            addProperty("minDistanceBetweenMovements", 2.0)
+    private fun loadOrCreate(fileName: String): YamlConfiguration {
+        val file = File(dataFolder, fileName)
+        if (!file.exists()) {
+            file.parentFile.mkdirs()
+            this::class.java.getResourceAsStream("/$fileName")?.use {
+                file.outputStream().use { out -> it.copyTo(out) }
+            }
         }
-        file.writeText(defaultConfig.toString())
+        return YamlConfiguration.loadConfiguration(file)
+    }
+
+    fun reload() {
+        config.load(File(dataFolder, "config.yml"))
     }
 }
