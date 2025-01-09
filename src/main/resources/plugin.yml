@@ -13,3 +13,18 @@ jvm-args: >
   --add-opens=java.base/java.io=ALL-UNNAMED
   --add-opens=java.base/java.util=ALL-UNNAMED
 
+commands:
+  synchronize:
+    description: Synchronize player data.
+    usage: /synchronize <player>
+    permission: statistics.synchronize
+    permission-message: "You do not have permission to use this command."
+
+permissions:
+  statistics.synchronize:
+    description: Allows the use of the /synchronize command.
+    default: false
+
+  statistics.synchronize.other:
+    description: Allows the /synchronize command to be used on other players.
+    default: true

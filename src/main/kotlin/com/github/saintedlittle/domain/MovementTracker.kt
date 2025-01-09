@@ -28,8 +28,7 @@ class MovementTracker(
             val movementsInWorld = movementsByWorld.getOrPut(worldName) { mutableListOf() }.toMutableList()
 
             val lastPoint = movementsInWorld.lastOrNull()
-            val minDistance = configManager.get("minDistanceBetweenMovements")?.toDoubleOrNull()
-                ?: DEFAULT_MIN_DISTANCE
+            val minDistance = configManager.config.getDouble("minDistanceBetweenMovements", DEFAULT_MIN_DISTANCE)
 
             if (lastPoint == null || location.distance(lastPoint.toLocation(location.world!!)) >= minDistance) {
                 movementsInWorld.add(MovementPoint(location.x, location.y, location.z, System.currentTimeMillis()))

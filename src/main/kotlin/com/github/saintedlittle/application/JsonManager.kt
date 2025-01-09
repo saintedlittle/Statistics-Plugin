@@ -38,9 +38,9 @@ object JsonUtil {
         return json.encodeToString(obj)
     }
 
-//    inline fun <reified T> fromJson(jsonString: String): T {
-//        return json.decodeFromString(jsonString)
-//    }
+    inline fun <reified T> fromJson(jsonString: String): T {
+        return json.decodeFromString(jsonString)
+    }
 }
 
 
