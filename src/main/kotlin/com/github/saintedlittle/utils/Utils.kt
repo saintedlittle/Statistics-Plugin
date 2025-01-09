@@ -1,5 +1,5 @@
 package com.github.saintedlittle.utils
 
-fun kotlinToJavaLong(value: Long): java.lang.Long = java.lang.Long(value.toString())
+fun Long.toJavaLong(): java.lang.Long = java.lang.Long(this.toString())
 
-fun javaToKotlinLong(value: java.lang.Long?): Long? = value?.toLong()
+fun java.lang.Long.toKotlinLong(): Long = this.toLong()

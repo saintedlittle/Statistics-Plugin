@@ -30,14 +30,24 @@ class ConfigManager(private val dataFolder: File) {
 
     private fun loadOrCreate(fileName: String): YamlConfiguration {
         val file = File(dataFolder, fileName)
+
         if (!file.exists()) {
             file.parentFile.mkdirs()
-            this::class.java.getResourceAsStream("/$fileName")?.use {
-                file.outputStream().use { out -> it.copyTo(out) }
+
+            val resource = Thread.currentThread().contextClassLoader.getResource(fileName)
+                ?: throw IllegalArgumentException("Resource $fileName not found")
+
+            resource.openStream().use { input ->
+                file.outputStream().use { output ->
+                    input.copyTo(output)
+                }
             }
         }
+
+        // Загружаем файл YAML
         return YamlConfiguration.loadConfiguration(file)
     }
+
 
     fun reload() {
         config.load(File(dataFolder, "config.yml"))

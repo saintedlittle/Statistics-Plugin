@@ -15,7 +15,7 @@ class KafkaProducerService @Inject constructor(
 
     init {
         val props = configManager.kafkaProducerConfig.apply {
-            put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "${configManager.get("kafka.ip")}:${configManager.get("kafka.port")}")
+            put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "${configManager.kafkaProducerConfig["kafka.ip"]}:${configManager.kafkaProducerConfig["kafka.port"]}")
         }
         producer = KafkaProducer(props)
     }

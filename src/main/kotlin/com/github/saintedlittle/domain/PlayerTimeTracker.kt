@@ -1,7 +1,7 @@
 package com.github.saintedlittle.domain
 
-import com.github.saintedlittle.utils.javaToKotlinLong
-import com.github.saintedlittle.utils.kotlinToJavaLong
+import com.github.saintedlittle.utils.toJavaLong
+import com.github.saintedlittle.utils.toKotlinLong
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -27,16 +27,16 @@ class PlayerTimeTracker(
 
     fun onPlayerJoin(player: Player) {
         val playerId = player.uniqueId
-        playerSessionStart.put(playerId, kotlinToJavaLong(System.nanoTime()))
+        playerSessionStart.put(playerId, System.nanoTime().toJavaLong())
     }
 
     fun onPlayerExit(player: Player) {
         val playerId = player.uniqueId
         val sessionStart = playerSessionStart.get(playerId)
         if (sessionStart != null) {
-            val sessionTime = System.nanoTime() - javaToKotlinLong(sessionStart)!!
-            val totalPlayTime = javaToKotlinLong(playerTimes.get(playerId)) ?: 0L
-            playerTimes.put(playerId, kotlinToJavaLong(totalPlayTime + sessionTime))
+            val sessionTime = System.nanoTime() - sessionStart.toKotlinLong()
+            val totalPlayTime = (playerTimes.get(playerId)).toKotlinLong()
+            playerTimes.put(playerId, (totalPlayTime + sessionTime).toJavaLong())
             playerSessionStart.remove(playerId)
         }
     }
@@ -44,21 +44,19 @@ class PlayerTimeTracker(
     private fun updateTimes() {
         playerSessionStart.forEach { entry ->
             val playerId = entry.key
-            val sessionStart = javaToKotlinLong(entry.value)
-            if (sessionStart != null) {
-                val sessionTime = System.nanoTime() - sessionStart
-                val totalPlayTime = javaToKotlinLong(playerTimes.get(playerId)) ?: 0L
-                playerTimes.put(playerId, kotlinToJavaLong(totalPlayTime + sessionTime))
-                playerSessionStart.put(playerId, kotlinToJavaLong(System.nanoTime()))
-            }
+            val sessionStart = (entry.value).toKotlinLong()
+            val sessionTime = System.nanoTime() - sessionStart
+            val totalPlayTime = (playerTimes.get(playerId)).toKotlinLong()
+            playerTimes.put(playerId, (totalPlayTime + sessionTime).toJavaLong())
+            playerSessionStart.put(playerId, (System.nanoTime()).toJavaLong())
         }
     }
 
     fun getTotalPlayTime(player: Player): Long {
         val playerId = player.uniqueId
-        val totalPlayTime = javaToKotlinLong(playerTimes.get(playerId)) ?: 0L
+        val totalPlayTime = (playerTimes.get(playerId)).toKotlinLong()
         val currentSessionTime = playerSessionStart.get(playerId)?.let {
-            System.nanoTime() - javaToKotlinLong(it)!!
+            System.nanoTime() - it.toKotlinLong()
         } ?: 0L
         return totalPlayTime + currentSessionTime
     }

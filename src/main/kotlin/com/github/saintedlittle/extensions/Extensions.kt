@@ -13,41 +13,62 @@ fun Player.collectStatistics(): Map<String, Int> {
 
     Statistic.entries.forEach { statistic ->
         when (statistic.type) {
-            Statistic.Type.BLOCK -> Material.entries.asSequence()
-                .filter { it.isBlock }
-                .forEach { material ->
-                    statisticsMap.safeAdd("${statistic.name}_${material.name}", checkPositive = true)
-                    { getStatistic(statistic, material) }
-                }
+            Statistic.Type.BLOCK -> {
+                Material.entries.asSequence()
+                    .filter { it.isBlock }
+                    .forEach { material ->
+                        statisticsMap.safeAdd("${statistic.name}_${material.name}", checkPositive = true) {
+                            getStatistic(statistic, material)
+                        }
+                    }
+            }
 
-            Statistic.Type.ITEM -> Material.entries.asSequence()
-                .filter { it.isItem }
-                .forEach { material ->
-                    statisticsMap.safeAdd("${statistic.name}_${material.name}", checkPositive = true)
-                    { getStatistic(statistic, material) }
-                }
+            Statistic.Type.ITEM -> {
+                Material.entries.asSequence()
+                    .filter { it.isItem }
+                    .forEach { material ->
+                        statisticsMap.safeAdd("${statistic.name}_${material.name}", checkPositive = true) {
+                            getStatistic(statistic, material)
+                        }
+                    }
+            }
 
-            Statistic.Type.ENTITY -> EntityType.entries.asSequence()
-                .forEach { entityType ->
-                    statisticsMap.safeAdd("${statistic.name}_${entityType.name}", checkPositive = true)
-                    { getStatistic(statistic, entityType) }
-                }
+            Statistic.Type.ENTITY -> {
+                EntityType.entries.asSequence()
+                    .forEach { entityType ->
+                        statisticsMap.safeAdd("${statistic.name}_${entityType.name}", checkPositive = true) {
+                            getStatistic(statistic, entityType)
+                        }
+                    }
+            }
 
-            else -> statisticsMap.safeAdd(statistic.name) { getStatistic(statistic) }
+            else -> {
+                statisticsMap.safeAdd(statistic.name) {
+                    getStatistic(statistic)
+                }
+            }
         }
     }
 
     return statisticsMap
 }
 
-private fun MutableMap<String, Int>.safeAdd(key: String, checkPositive: Boolean = false, valueProvider: () -> Int) {
-    try {
-        if (checkPositive) {
-            val value = valueProvider()
-            if (value > 0) this[key] = value
-        } else this[key] = valueProvider()
-    } catch (ignored: IllegalArgumentException) {}
+private fun MutableMap<String, Int>.safeAdd(
+    key: String,
+    checkPositive: Boolean = false,
+    valueProvider: () -> Int
+) {
+    runCatching {
+        valueProvider()
+    }.onSuccess { value ->
+        if (!checkPositive || value > 0) {
+            this[key] = value
+        }
+    }.onFailure {
+        // TODO: LOG
+    }
 }
+
 
 fun Player.collectAttributes(): Map<String, Double> {
     return Attribute.entries.mapNotNull { attribute ->
