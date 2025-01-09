@@ -2,6 +2,7 @@ package com.github.saintedlittle
 
 import com.github.saintedlittle.application.ConfigManager
 import com.github.saintedlittle.application.JsonManager
+import com.github.saintedlittle.commands.SynchronizeCommand
 import com.github.saintedlittle.domain.BedTracker
 import com.github.saintedlittle.domain.ExpTracker
 import com.github.saintedlittle.domain.MovementTracker
@@ -9,9 +10,8 @@ import com.github.saintedlittle.domain.PlayerTimeTracker
 import com.github.saintedlittle.listeners.BlockListener
 import com.github.saintedlittle.listeners.MovementListener
 import com.github.saintedlittle.listeners.PlayerEventListener
-import com.github.saintedlittle.providers.BlockListenerProvider
-import com.github.saintedlittle.providers.MovementListenerProvider
-import com.github.saintedlittle.providers.PlayerEventListenerProvider
+import com.github.saintedlittle.messaging.KafkaProducerService
+import com.github.saintedlittle.providers.*
 import com.google.inject.AbstractModule
 import kotlinx.coroutines.CoroutineScope
 import org.bukkit.plugin.Plugin
@@ -71,10 +71,13 @@ class MainModule(
             )
         )
 
+        bind(KafkaProducerService::class.java).toProvider(KafkaProducerServiceProvider::class.java)
+
         bind(MovementListener::class.java).toProvider(MovementListenerProvider::class.java)
         bind(BlockListener::class.java).toProvider(BlockListenerProvider::class.java)
         bind(PlayerEventListener::class.java).toProvider(PlayerEventListenerProvider::class.java)
 
+        bind(SynchronizeCommand::class.java).toProvider(SynchronizeCommandProvider::class.java)
     }
 
     private inline fun <reified K, reified V> createCache(

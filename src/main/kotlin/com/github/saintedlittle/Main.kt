@@ -1,6 +1,7 @@
 package com.github.saintedlittle
 
 import com.github.saintedlittle.application.ConfigManager
+import com.github.saintedlittle.utils.CommandRegistrar
 import com.github.saintedlittle.utils.ListenerRegistrar
 import com.google.inject.Guice
 import com.google.inject.Injector
@@ -22,6 +23,7 @@ class Main : JavaPlugin() {
         injector = Guice.createInjector(MainModule(this, scope, configManager))
 
         ListenerRegistrar.registerAll(this, injector)
+        CommandRegistrar.registerAll(this, injector)
 
         logger.info("Plugin successfully enabled.")
     }
