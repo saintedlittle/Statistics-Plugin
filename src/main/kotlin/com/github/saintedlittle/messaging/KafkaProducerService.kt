@@ -8,15 +8,17 @@ import org.apache.kafka.clients.producer.ProducerRecord
 import org.slf4j.Logger
 
 class KafkaProducerService @Inject constructor(
-    private val configManager: ConfigManager,
+    configManager: ConfigManager,
     private val logger: Logger
 ) {
     private val producer: KafkaProducer<String, String>
 
     init {
         val props = configManager.kafkaProducerConfig.apply {
-            put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "${configManager.kafkaProducerConfig["kafka.ip"]}:${configManager.kafkaProducerConfig["kafka.port"]}")
+            put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "${this["ip"]}:${this["port"]}")
         }
+        // ConfigException: Invalid value StringSerializer for configuration key.serializer: Class StringSerializer could not be found.
+        Thread.currentThread().setContextClassLoader(null)
         producer = KafkaProducer(props)
     }
 
@@ -26,6 +28,10 @@ class KafkaProducerService @Inject constructor(
 
     fun sendPlayerSync(key: String, message: String) {
         sendMessage(KafkaTopic.PLAYER_SYNC, key, message)
+    }
+
+    fun close() {
+        producer.close()
     }
 
     private fun sendMessage(topic: KafkaTopic, key: String, message: String) {

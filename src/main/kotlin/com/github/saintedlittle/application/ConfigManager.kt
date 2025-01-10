@@ -15,10 +15,7 @@ class ConfigManager(private val dataFolder: File) {
     }
 
     private fun getKafkaConfig(fileName: String): Properties {
-        val resourcePath = this::class.java.classLoader.getResource(fileName)
-            ?: throw IllegalArgumentException("Kafka configuration file not found")
-        val file = File(resourcePath.toURI())
-
+        val file = ensureFileExists(fileName)
         val configMap: Map<String, String> = JsonUtil.fromJson(file.readText())
 
         val props = Properties()
@@ -29,12 +26,19 @@ class ConfigManager(private val dataFolder: File) {
     }
 
     private fun loadOrCreate(fileName: String): YamlConfiguration {
+        val file = ensureFileExists(fileName)
+
+        // Загружаем файл YAML
+        return YamlConfiguration.loadConfiguration(file)
+    }
+
+    private fun ensureFileExists(fileName: String): File {
         val file = File(dataFolder, fileName)
 
         if (!file.exists()) {
             file.parentFile.mkdirs()
 
-            val resource = Thread.currentThread().contextClassLoader.getResource(fileName)
+            val resource = this::class.java.classLoader.getResource(fileName)
                 ?: throw IllegalArgumentException("Resource $fileName not found")
 
             resource.openStream().use { input ->
@@ -44,10 +48,8 @@ class ConfigManager(private val dataFolder: File) {
             }
         }
 
-        // Загружаем файл YAML
-        return YamlConfiguration.loadConfiguration(file)
+        return file
     }
-
 
     fun reload() {
         config.load(File(dataFolder, "config.yml"))
