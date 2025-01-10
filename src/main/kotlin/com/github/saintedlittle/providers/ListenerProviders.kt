@@ -8,6 +8,7 @@ import com.github.saintedlittle.domain.PlayerTimeTracker
 import com.github.saintedlittle.listeners.BlockListener
 import com.github.saintedlittle.listeners.MovementListener
 import com.github.saintedlittle.listeners.PlayerEventListener
+import com.github.saintedlittle.messaging.KafkaProducerService
 import com.google.inject.Inject
 import com.google.inject.Provider
 import kotlinx.coroutines.CoroutineScope
@@ -33,12 +34,13 @@ class BlockListenerProvider @Inject constructor(
 
 class PlayerEventListenerProvider @Inject constructor(
     private val tracker: PlayerTimeTracker,
+    private val kafkaProducerService: KafkaProducerService,
     private val jsonManager: JsonManager,
     private val expTracker: ExpTracker,
     private val scope: CoroutineScope,
     private val logger: Logger
 ) : Provider<PlayerEventListener> {
     override fun get(): PlayerEventListener {
-        return PlayerEventListener(tracker, jsonManager, expTracker, scope, logger)
+        return PlayerEventListener(tracker, kafkaProducerService, jsonManager, expTracker, scope, logger)
     }
 }

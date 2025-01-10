@@ -1,6 +1,7 @@
 package com.github.saintedlittle
 
 import com.github.saintedlittle.application.ConfigManager
+import com.github.saintedlittle.messaging.KafkaConsumerService
 import com.github.saintedlittle.messaging.KafkaProducerService
 import com.github.saintedlittle.utils.CommandRegistrar
 import com.github.saintedlittle.utils.ListenerRegistrar
@@ -32,6 +33,7 @@ class Main : JavaPlugin() {
     override fun onDisable() {
         injector.getInstance(CacheManager::class.java).close()
         injector.getInstance(KafkaProducerService::class.java).close()
+        injector.getInstance(KafkaConsumerService::class.java).close()
         scope.cancel()
 
         logger.info("Plugin successfully disabled.")

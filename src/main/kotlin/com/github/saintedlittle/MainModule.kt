@@ -10,6 +10,7 @@ import com.github.saintedlittle.domain.PlayerTimeTracker
 import com.github.saintedlittle.listeners.BlockListener
 import com.github.saintedlittle.listeners.MovementListener
 import com.github.saintedlittle.listeners.PlayerEventListener
+import com.github.saintedlittle.messaging.KafkaConsumerService
 import com.github.saintedlittle.messaging.KafkaProducerService
 import com.github.saintedlittle.providers.*
 import com.google.inject.AbstractModule
@@ -72,6 +73,7 @@ class MainModule(
         )
 
         bind(KafkaProducerService::class.java).toProvider(KafkaProducerServiceProvider::class.java)
+        bind(KafkaConsumerService::class.java).toProvider(KafkaConsumerServiceProvider::class.java)
 
         bind(MovementListener::class.java).toProvider(MovementListenerProvider::class.java)
         bind(BlockListener::class.java).toProvider(BlockListenerProvider::class.java)

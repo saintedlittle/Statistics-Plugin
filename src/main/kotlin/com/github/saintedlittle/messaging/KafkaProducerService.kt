@@ -22,12 +22,27 @@ class KafkaProducerService @Inject constructor(
         producer = KafkaProducer(props)
     }
 
-    enum class KafkaTopic(val topicName: String) {
-        PLAYER_SYNC("player-data-sync")
+    private enum class KafkaTopic(val topicName: String) {
+        PLAYER_SYNC("player-data-sync"),
+        PLAYER_LOGIN("player-login-events"),
+        PLAYER_LOGOUT("player-logout-events"),
+        PAYLOAD_RESPONSE("payload-response")
     }
 
     fun sendPlayerSync(key: String, message: String) {
         sendMessage(KafkaTopic.PLAYER_SYNC, key, message)
+    }
+
+    fun sendPlayerLogin(key: String, message: String) {
+        sendMessage(KafkaTopic.PLAYER_LOGIN, key, message)
+    }
+
+    fun sendPlayerLogout(key: String, message: String) {
+        sendMessage(KafkaTopic.PLAYER_LOGOUT, key, message)
+    }
+
+    fun sendPayloadResponse(key: String, message: String) {
+        sendMessage(KafkaTopic.PAYLOAD_RESPONSE, key, message)
     }
 
     fun close() {
