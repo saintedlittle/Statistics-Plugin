@@ -16,6 +16,7 @@ class KafkaConsumerService @Inject constructor(
 ) {
     private val listeners = mutableMapOf<KafkaTopic, MutableList<(KafkaEventData) -> Unit>>()
     private val consumer: KafkaConsumer<String, String>
+    private val thread: Thread
 
     init {
         val props = configManager.kafkaConsumerConfig.apply {
@@ -25,24 +26,27 @@ class KafkaConsumerService @Inject constructor(
 
         consumer.subscribe(KafkaTopic.entries.map { it.topicName })
 
-        /*
-        Здесь возникает проблема, что плагин выключается
-        А оно продолжает работу (в том плане, что оно успело
-        Войти в цикл до срабатывания метода cancel и в итоге вылезла ошибка
-        java.lang.IllegalStateException: zip file closed)
-
-        Что делать?
-         */
-        scope.launch {
-            while (isActive) {
-                val records = consumer.poll(Duration.ofMillis(1000))
-                for (record in records) {
-                    logger.debug("Received message: topic=${record.topic()}, key=${record.key()}, value=${record.value()}")
-                    triggerEvent(getTopic(record.topic()), record.key(), record.value())
+        thread = Thread {
+            try {
+                while (!Thread.currentThread().isInterrupted) {
+                    val records = consumer.poll(Duration.ofMillis(1000))
+                    for (record in records) {
+                        logger.debug("Received message: topic=${record.topic()}, key=${record.key()}, value=${record.value()}")
+                        triggerEvent(getTopic(record.topic()), record.key(), record.value())
+                    }
+                    Thread.sleep(100)
                 }
-                delay(100)
+            } catch (e: Exception) {
+                if (e is InterruptedException) {
+                    logger.debug("Kafka polling loop interrupted")
+                    Thread.currentThread().interrupt()
+                } else {
+                    logger.error("Error in Kafka polling loop", e)
+                }
             }
         }
+
+        thread.start()
     }
 
     fun registerListener(listener: KafkaEventListener) {
@@ -60,6 +64,7 @@ class KafkaConsumerService @Inject constructor(
     }
 
     fun close() {
+        thread.interrupt()
         consumer.close()
     }
 
