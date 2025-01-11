@@ -1,9 +1,7 @@
 package com.github.saintedlittle.application
 
 
-import com.github.saintedlittle.data.ArmorSlot
-import com.github.saintedlittle.data.LocationData
-import com.github.saintedlittle.data.PlayerData
+import com.github.saintedlittle.data.*
 import com.github.saintedlittle.domain.BedTracker
 import com.github.saintedlittle.domain.MovementTracker
 import com.github.saintedlittle.domain.PlayerTimeTracker
@@ -13,7 +11,6 @@ import com.github.saintedlittle.extensions.collectStatistics
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.bukkit.entity.Player
-import com.github.saintedlittle.data.ItemData
 import com.github.saintedlittle.domain.ExpTracker
 import com.google.inject.Inject
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
@@ -32,17 +29,18 @@ fun ItemStack.toItemData(): ItemData {
 }
 
 object JsonUtil {
-    val json = Json { prettyPrint = true }
+    val prettyJson = Json { prettyPrint = true }
+    val json = Json
 
-    inline fun <reified T> toJson(obj: T): String {
-        return json.encodeToString(obj)
+    inline fun <reified T> toJson(obj: T, readable: Boolean = true): String {
+        return if (readable) prettyJson.encodeToString(obj)
+        else json.encodeToString(obj)
     }
 
     inline fun <reified T> fromJson(jsonString: String): T {
-        return json.decodeFromString(jsonString)
+        return prettyJson.decodeFromString(jsonString)
     }
 }
-
 
 class JsonManager @Inject constructor(
     private val timeTracker: PlayerTimeTracker,
@@ -51,10 +49,10 @@ class JsonManager @Inject constructor(
     private val expTracker: ExpTracker
 ) {
 
-    fun createPlayerJson(player: Player): String {
+    fun createPlayerJson(player: Player, readable: Boolean = true): String {
         val playerData = collectPlayerData(player)
         clearPlayerData(player)
-        return JsonUtil.toJson(playerData)
+        return JsonUtil.toJson(playerData, readable)
     }
 
     private fun collectPlayerData(player: Player): PlayerData {
@@ -64,6 +62,7 @@ class JsonManager @Inject constructor(
         val exp = expTracker.getExperience(player)
 
         return PlayerData(
+            metaData = MetaData.from(player),
             inventory = player.inventory.contents.filterNotNull().map { it.toItemData() },
             armor = player.inventory.armorContents.mapIndexedNotNull { index, item ->
                 ArmorSlot.entries.getOrNull(index)?.name?.let { it to (item?.toItemData() ?: ItemData.empty()) }

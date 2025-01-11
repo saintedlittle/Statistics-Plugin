@@ -6,6 +6,7 @@ import com.github.saintedlittle.domain.ExpTracker
 import com.github.saintedlittle.domain.MovementTracker
 import com.github.saintedlittle.domain.PlayerTimeTracker
 import com.github.saintedlittle.listeners.BlockListener
+import com.github.saintedlittle.listeners.KafkaListener
 import com.github.saintedlittle.listeners.MovementListener
 import com.github.saintedlittle.listeners.PlayerEventListener
 import com.github.saintedlittle.messaging.KafkaProducerService
@@ -42,5 +43,15 @@ class PlayerEventListenerProvider @Inject constructor(
 ) : Provider<PlayerEventListener> {
     override fun get(): PlayerEventListener {
         return PlayerEventListener(tracker, kafkaProducerService, jsonManager, expTracker, scope, logger)
+    }
+}
+
+class KafkaListenerProvider @Inject constructor(
+    private val kafkaProducerService: KafkaProducerService,
+    private val jsonManager: JsonManager,
+    private val logger: Logger
+) : Provider<KafkaListener> {
+    override fun get(): KafkaListener {
+        return KafkaListener(kafkaProducerService, jsonManager, logger)
     }
 }

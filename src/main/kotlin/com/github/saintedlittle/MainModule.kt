@@ -8,6 +8,7 @@ import com.github.saintedlittle.domain.ExpTracker
 import com.github.saintedlittle.domain.MovementTracker
 import com.github.saintedlittle.domain.PlayerTimeTracker
 import com.github.saintedlittle.listeners.BlockListener
+import com.github.saintedlittle.listeners.KafkaListener
 import com.github.saintedlittle.listeners.MovementListener
 import com.github.saintedlittle.listeners.PlayerEventListener
 import com.github.saintedlittle.messaging.KafkaConsumerService
@@ -78,6 +79,7 @@ class MainModule(
         bind(MovementListener::class.java).toProvider(MovementListenerProvider::class.java)
         bind(BlockListener::class.java).toProvider(BlockListenerProvider::class.java)
         bind(PlayerEventListener::class.java).toProvider(PlayerEventListenerProvider::class.java)
+        bind(KafkaListener::class.java).toProvider(KafkaListenerProvider::class.java)
 
         bind(SynchronizeCommand::class.java).toProvider(SynchronizeCommandProvider::class.java)
     }
