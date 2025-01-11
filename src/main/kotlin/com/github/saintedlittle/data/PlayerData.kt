@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class PlayerData(
+    val metaData: MetaData,
     val inventory: List<ItemData>,
     val armor: Map<String, ItemData>,
     val statistics: Map<String, Int>,

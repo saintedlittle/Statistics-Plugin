@@ -10,6 +10,9 @@ class ConfigManager(private val dataFolder: File) {
     val kafkaProducerConfig: Properties
         get() = getKafkaConfig("kafka-producer-config.json")
 
+    val kafkaConsumerConfig: Properties
+        get() = getKafkaConfig("kafka-consumer-config.json")
+
     init {
         config = loadOrCreate("config.yml")
     }

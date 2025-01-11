@@ -4,6 +4,7 @@ import com.github.saintedlittle.annotations.AutoRegister
 import com.github.saintedlittle.application.JsonManager
 import com.github.saintedlittle.domain.ExpTracker
 import com.github.saintedlittle.domain.PlayerTimeTracker
+import com.github.saintedlittle.messaging.KafkaProducerService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.bukkit.event.EventHandler
@@ -17,6 +18,7 @@ import javax.inject.Inject
 @AutoRegister
 class PlayerEventListener @Inject constructor(
     private val tracker: PlayerTimeTracker,
+    private val kafkaProducerService: KafkaProducerService,
     private val jsonManager: JsonManager,
     private val expTracker: ExpTracker,
     private val scope: CoroutineScope,
@@ -25,12 +27,14 @@ class PlayerEventListener @Inject constructor(
 
     @EventHandler
     fun onPlayerJoin(event: PlayerJoinEvent) {
+        val player = event.player
         try {
-            tracker.onPlayerJoin(event.player)
-            expTracker.updateExperience(event.player)
-            logger.info("Player ${event.player.name} joined the server.")
+            tracker.onPlayerJoin(player)
+            expTracker.updateExperience(player)
+            kafkaProducerService.sendPlayerLogin(player.uniqueId.toString(), System.currentTimeMillis().toString())
+            logger.info("Player ${player.name} joined the server.")
         } catch (e: Exception) {
-            logger.error("Error during PlayerJoinEvent for ${event.player.name}: ${e.message}", e)
+            logger.error("Error during PlayerJoinEvent for ${player.name}: ${e.message}", e)
         }
     }
 
@@ -40,7 +44,8 @@ class PlayerEventListener @Inject constructor(
         scope.launch {
             try {
                 val playerJson = jsonManager.createPlayerJson(player)
-                logger.info("Generated JSON for player ${player.name}: $playerJson")
+                kafkaProducerService.sendPlayerLogout(player.uniqueId.toString(), playerJson)
+                logger.debug("Generated JSON for player ${player.name}: $playerJson")
             } catch (e: Exception) {
                 logger.error("Error during PlayerQuitEvent for ${player.name}: ${e.message}", e)
             } finally {
