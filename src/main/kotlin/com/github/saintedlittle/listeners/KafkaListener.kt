@@ -20,59 +20,40 @@ class KafkaListener @Inject constructor(
     private val jsonManager: JsonManager,
     private val logger: Logger
 ) : KafkaEventListener {
+
     @KafkaEvent(topic = KafkaTopic.PLAYER_PAYLOAD)
     fun onPlayerPayload(event: KafkaEventData) {
-        logger.debug("New payload: topic={} key={} value={}", event.topic, event.key, event.value)
+        logger.debug("Received payload: topic={}, key={}, value={}", event.topic, event.key, event.value)
 
-        try {
-            val payloadJson: MutableMap<String, String> = JsonUtil.fromJson(event.value)
-            val key = event.key
-            val payload = Payload.of(payloadJson.remove("payload"))
-            val playerId = payloadJson.remove("playerId")
+        val payloadRequest = runCatching { parsePayload(event) }
+            .onFailure { logger.error("Error parsing payload: topic={}, key={}", event.topic, event.key, it) }
+            .getOrNull() ?: return
 
-            if (payload == Payload.UNKNOWN || playerId == null) {
-                logger.debug("Failed to receive payload")
-                return
-            }
+        val response = handleRequest(payloadRequest)
+        sendResponse(response)
+    }
 
-            val request = PayloadRequest(
-                payload = payload,
-                playerId = UUID.fromString(playerId),
-                key = key,
-                data = payloadJson
-            )
-            val response = handleRequest(request)
+    private fun parsePayload(event: KafkaEventData): PayloadRequest {
+        val payloadJson: MutableMap<String, String> = JsonUtil.fromJson(event.value)
+        val key = event.key
+        val payload = Payload.of(payloadJson.remove("payload"))
+            ?: throw IllegalArgumentException("Unknown payload type")
+        val playerId = payloadJson.remove("playerId")?.let { UUID.fromString(it) }
+            ?: throw IllegalArgumentException("Invalid or missing playerId")
 
-            sendResponse(response)
-        } catch (e: Exception) {
-            logger.error("Error processing payload: topic=${event.topic} key=${event.key} value=${event.value}", e)
-        }
+        return PayloadRequest(
+            payload = payload,
+            playerId = playerId,
+            key = key,
+            data = payloadJson
+        )
     }
 
     private fun handleRequest(request: PayloadRequest): PayloadResponse {
-        val data = mutableMapOf<String, String>()
-        val status: ResponseStatus
-
-        when (request.payload) {
-            Payload.GET_USERNAME -> {
-                val player = Bukkit.getOfflinePlayer(request.playerId)
-                if (player.name != null) {
-                    data["username"] = player.name!!
-                    status = ResponseStatus.SUCCESS
-                } else status = ResponseStatus.NOT_FOUND
-            }
-
-            Payload.GET_FULL_DATA -> {
-                val player = Bukkit.getPlayer(request.playerId)
-                if (player != null) {
-                    data["data"] = jsonManager.createPlayerJson(player, readable = false)
-                    status = ResponseStatus.SUCCESS
-                } else status = ResponseStatus.NOT_FOUND
-            }
-
-            else -> {
-                status = ResponseStatus.NOT_FOUND
-            }
+        val (status, data) = when (request.payload) {
+            Payload.GET_USERNAME -> handleGetUsername(request.playerId)
+            Payload.GET_FULL_DATA -> handleGetFullData(request.playerId)
+            else -> ResponseStatus.NOT_FOUND to emptyMap()
         }
 
         return PayloadResponse(
@@ -84,9 +65,31 @@ class KafkaListener @Inject constructor(
         )
     }
 
+    private fun handleGetUsername(playerId: UUID): Pair<ResponseStatus, Map<String, String>> {
+        val player = Bukkit.getOfflinePlayer(playerId)
+        return if (player.name != null) {
+            ResponseStatus.SUCCESS to mapOf("username" to player.name!!)
+        } else {
+            ResponseStatus.NOT_FOUND to emptyMap()
+        }
+    }
+
+    private fun handleGetFullData(playerId: UUID): Pair<ResponseStatus, Map<String, String>> {
+        val player = Bukkit.getPlayer(playerId)
+        return if (player != null) {
+            ResponseStatus.SUCCESS to mapOf("data" to jsonManager.createPlayerJson(player, readable = false))
+        } else {
+            ResponseStatus.NOT_FOUND to emptyMap()
+        }
+    }
+
     private fun sendResponse(response: PayloadResponse) {
-        val data = JsonUtil.toJson(response)
-        kafkaProducerService.sendPayloadResponse(response.key, data)
+        runCatching {
+            val data = JsonUtil.toJson(response)
+            kafkaProducerService.sendPayloadResponse(response.key, data)
+            logger.debug("Response sent: key={}, status={}", response.key, response.status)
+        }.onFailure {
+            logger.error("Failed to send response: key=${response.key}", it)
+        }
     }
 }
-

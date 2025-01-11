@@ -15,6 +15,6 @@ enum class Payload(val id: String) {
     UNKNOWN("unknown");
 
     companion object {
-        fun of(id: String?): Payload = entries.firstOrNull { it.id.equals(id, true) } ?: UNKNOWN
+        fun of(id: String?): Payload? = entries.firstOrNull { it.id.equals(id, true) }
     }
 }
