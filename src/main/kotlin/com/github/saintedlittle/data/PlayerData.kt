@@ -15,6 +15,7 @@ data class PlayerData(
     val level: Int,
     val totalExp: Int,
     val currentExp: Int,
+    val blockInteractions: List<BlockInteractionData>,
     val beds: List<LocationData>,
     val movements: Map<String, List<MovementPoint>>
 )

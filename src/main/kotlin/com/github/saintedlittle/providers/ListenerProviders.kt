@@ -1,10 +1,7 @@
 package com.github.saintedlittle.providers
 
 import com.github.saintedlittle.application.JsonManager
-import com.github.saintedlittle.domain.BedTracker
-import com.github.saintedlittle.domain.ExpTracker
-import com.github.saintedlittle.domain.MovementTracker
-import com.github.saintedlittle.domain.PlayerTimeTracker
+import com.github.saintedlittle.domain.*
 import com.github.saintedlittle.listeners.BlockListener
 import com.github.saintedlittle.listeners.KafkaListener
 import com.github.saintedlittle.listeners.MovementListener
@@ -25,11 +22,12 @@ class MovementListenerProvider @Inject constructor(
 }
 
 class BlockListenerProvider @Inject constructor(
+    private val blockTracker: BlockTracker,
     private val bedTracker: BedTracker,
     private val logger: Logger
 ) : Provider<BlockListener> {
     override fun get(): BlockListener {
-        return BlockListener(bedTracker, logger)
+        return BlockListener(blockTracker, bedTracker, logger)
     }
 }
 

@@ -18,8 +18,13 @@ class KafkaProducerService @Inject constructor(
             put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "${this["ip"]}:${this["port"]}")
         }
         // ConfigException: Invalid value StringSerializer for configuration key.serializer: Class StringSerializer could not be found.
-        Thread.currentThread().setContextClassLoader(null)
-        producer = KafkaProducer(props)
+        val classLoader = Thread.currentThread().contextClassLoader
+        try {
+            Thread.currentThread().contextClassLoader = null
+            producer = KafkaProducer(props)
+        } finally {
+            Thread.currentThread().contextClassLoader = classLoader
+        }
     }
 
     private enum class KafkaTopic(val topicName: String) {
