@@ -7,14 +7,14 @@ import org.bukkit.entity.Player
 data class MetaData(
     val uniqueId: String,
     val name: String,
-    val server: String
+    val stateData: StateData
 ) {
     companion object {
         fun from(player: Player): MetaData {
             return MetaData(
                 player.uniqueId.toString(),
                 player.name,
-                player.server.name
+                StateData.from(player)
             )
         }
     }
