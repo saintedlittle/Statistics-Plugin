@@ -3,10 +3,7 @@ package com.github.saintedlittle
 import com.github.saintedlittle.application.ConfigManager
 import com.github.saintedlittle.application.JsonManager
 import com.github.saintedlittle.commands.SynchronizeCommand
-import com.github.saintedlittle.domain.BedTracker
-import com.github.saintedlittle.domain.ExpTracker
-import com.github.saintedlittle.domain.MovementTracker
-import com.github.saintedlittle.domain.PlayerTimeTracker
+import com.github.saintedlittle.domain.*
 import com.github.saintedlittle.listeners.BlockListener
 import com.github.saintedlittle.listeners.KafkaListener
 import com.github.saintedlittle.listeners.MovementListener
@@ -44,6 +41,7 @@ class MainModule(
         val playerMovementsCache = createCache<UUID, String>(cacheManager, "playerMovements", 70000)
         val playerBedsCache = createCache<UUID, String>(cacheManager, "playerBeds", 7000)
         val playerExpCache = createCache<UUID, Triple<Int, Int, Int>>(cacheManager, "playerExp", 7000)
+        val playerBlockInteractionsCache = createCache<UUID, String>(cacheManager, "playerBlockInteractions", 40000)
 
         bind(Plugin::class.java).toInstance(plugin)
         bind(CoroutineScope::class.java).toInstance(scope)
@@ -57,6 +55,9 @@ class MainModule(
         bind(MovementTracker::class.java).toInstance(
             MovementTracker(scope, playerMovementsCache, configManager)
         )
+        bind(BlockTracker::class.java).toInstance(
+            BlockTracker(scope, playerBlockInteractionsCache)
+        )
         bind(BedTracker::class.java).toInstance(
             BedTracker(playerBedsCache)
         )
@@ -69,7 +70,8 @@ class MainModule(
                 PlayerTimeTracker(scope, playerTimesCache, playerSessionStartCache),
                 BedTracker(playerBedsCache),
                 MovementTracker(scope, playerMovementsCache, configManager),
-                ExpTracker(playerExpCache)
+                ExpTracker(playerExpCache),
+                BlockTracker(scope, playerBlockInteractionsCache)
             )
         )
 

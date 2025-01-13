@@ -2,16 +2,13 @@ package com.github.saintedlittle.application
 
 
 import com.github.saintedlittle.data.*
-import com.github.saintedlittle.domain.BedTracker
-import com.github.saintedlittle.domain.MovementTracker
-import com.github.saintedlittle.domain.PlayerTimeTracker
+import com.github.saintedlittle.domain.*
 import com.github.saintedlittle.extensions.collectAttributes
 import com.github.saintedlittle.extensions.collectPotionEffects
 import com.github.saintedlittle.extensions.collectStatistics
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.bukkit.entity.Player
-import com.github.saintedlittle.domain.ExpTracker
 import com.google.inject.Inject
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import org.bukkit.inventory.ItemStack
@@ -46,7 +43,8 @@ class JsonManager @Inject constructor(
     private val timeTracker: PlayerTimeTracker,
     private val bedTracker: BedTracker,
     private val movementTracker: MovementTracker,
-    private val expTracker: ExpTracker
+    private val expTracker: ExpTracker,
+    private val blockTracker: BlockTracker
 ) {
 
     fun createPlayerJson(player: Player, readable: Boolean = true): String {
@@ -60,6 +58,7 @@ class JsonManager @Inject constructor(
         val beds = bedTracker.getBeds(player).map { LocationData.from(it) }
         val movements = movementTracker.getMovements(player)
         val exp = expTracker.getExperience(player)
+        val blockInteractions = blockTracker.getBlockInteractions(player)
 
         return PlayerData(
             metaData = MetaData.from(player),
@@ -72,10 +71,11 @@ class JsonManager @Inject constructor(
             potionEffects = player.collectPotionEffects(),
             location = LocationData.from(player.location),
             totalTime = totalTime,
-            beds = beds,
             level = exp.first,
             totalExp = exp.second,
             currentExp = exp.third,
+            blockInteractions = blockInteractions,
+            beds = beds,
             movements = movements
         )
     }
@@ -84,6 +84,7 @@ class JsonManager @Inject constructor(
         expTracker.clearExperience(player)
         bedTracker.clearBeds(player)
         movementTracker.clearMovements(player)
+        blockTracker.clearBlockInteractions(player)
         timeTracker.onPlayerExit(player)
     }
 }

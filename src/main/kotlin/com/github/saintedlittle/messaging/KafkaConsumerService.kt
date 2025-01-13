@@ -3,7 +3,6 @@ package com.github.saintedlittle.messaging
 import com.github.saintedlittle.annotations.KafkaEvent
 import com.github.saintedlittle.application.ConfigManager
 import com.google.inject.Inject
-import kotlinx.coroutines.*
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.slf4j.Logger
@@ -11,7 +10,6 @@ import java.time.Duration
 
 class KafkaConsumerService @Inject constructor(
     configManager: ConfigManager,
-    scope: CoroutineScope,
     private val logger: Logger
 ) {
     private val listeners = mutableMapOf<KafkaTopic, MutableList<(KafkaEventData) -> Unit>>()
@@ -22,7 +20,13 @@ class KafkaConsumerService @Inject constructor(
         val props = configManager.kafkaConsumerConfig.apply {
             put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "${this["ip"]}:${this["port"]}")
         }
-        consumer = KafkaConsumer(props)
+        val classLoader = Thread.currentThread().contextClassLoader
+        try {
+            Thread.currentThread().contextClassLoader = null
+            consumer = KafkaConsumer(props)
+        } finally {
+            Thread.currentThread().contextClassLoader = classLoader
+        }
 
         consumer.subscribe(KafkaTopic.entries.map { it.topicName })
 
