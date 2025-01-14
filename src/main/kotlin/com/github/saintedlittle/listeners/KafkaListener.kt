@@ -18,6 +18,7 @@ import com.github.saintedlittle.messaging.data.Payload
 import com.github.saintedlittle.messaging.data.PayloadRequest
 import com.github.saintedlittle.messaging.data.PayloadResponse
 import com.github.saintedlittle.messaging.data.ResponseStatus
+import com.github.saintedlittle.models.PlayerWrapper
 import com.google.inject.Inject
 import org.bukkit.Bukkit
 import org.bukkit.OfflinePlayer
@@ -95,18 +96,13 @@ class KafkaListener @Inject constructor(
         )
     }
 
-    private fun <T> withPlayer(playerId: UUID, block: (Player) -> T): T? {
-        val player = Bukkit.getPlayer(playerId) ?: return null
-        return block(player)
-    }
-
-    private fun <T> withOfflinePlayer(playerId: UUID, block: (OfflinePlayer) -> T): T {
-        val player = Bukkit.getOfflinePlayer(playerId)
-        return block(player)
+    private fun <T> withPlayer(playerId: UUID, block: (PlayerWrapper) -> T): T {
+        val player = Bukkit.getPlayer(playerId) ?: Bukkit.getOfflinePlayer(playerId)
+        return block(PlayerWrapper(player))
     }
 
     private fun handleGetUsername(playerId: UUID): Pair<ResponseStatus, Map<String, String>> {
-        return withOfflinePlayer(playerId) { player ->
+        return withPlayer(playerId) { player ->
             player.name?.let { username ->
                 ResponseStatus.SUCCESS to mapOf("username" to username)
             } ?: NOT_FOUND_RESPONSE
@@ -115,102 +111,105 @@ class KafkaListener @Inject constructor(
 
     private fun handleMetaData(playerId: UUID): Pair<ResponseStatus, Map<String, String>> {
         return withPlayer(playerId) { player ->
-            val metaData = MetaData.from(player)
+            val metaData = player.metadata ?: return@withPlayer null
             ResponseStatus.SUCCESS to mapOf("metadata" to JsonUtil.toJson(metaData, readable = false))
         } ?: NOT_FOUND_RESPONSE
     }
 
     private fun handleGetInventory(playerId: UUID): Pair<ResponseStatus, Map<String, String>> {
         return withPlayer(playerId) { player ->
-            val inventory = player.inventory.contents.filterNotNull().map { it.toItemData() }
+            val inventory = player.inventory ?: return@withPlayer null
             ResponseStatus.SUCCESS to mapOf("inventory" to JsonUtil.toJson(inventory, readable = false))
         } ?: NOT_FOUND_RESPONSE
     }
 
     private fun handleGetArmor(playerId: UUID): Pair<ResponseStatus, Map<String, String>> {
         return withPlayer(playerId) { player ->
-            val armor = player.inventory.armorContents.mapIndexedNotNull { index, item ->
-                ArmorSlot.entries.getOrNull(index)?.name?.let { it to (item?.toItemData() ?: ItemData.empty()) }
-            }.toMap()
+            val armor = player.armor ?: return@withPlayer null
             ResponseStatus.SUCCESS to mapOf("armor" to JsonUtil.toJson(armor, readable = false))
         } ?: NOT_FOUND_RESPONSE
     }
 
     private fun handleGetStatistics(playerId: UUID): Pair<ResponseStatus, Map<String, String>> {
-        return withOfflinePlayer(playerId) { player ->
-            ResponseStatus.SUCCESS to mapOf("statistics" to JsonUtil.toJson(player.collectStatistics(), readable = false))
+        return withPlayer(playerId) { player ->
+            ResponseStatus.SUCCESS to mapOf("statistics" to JsonUtil.toJson(player.statistics, readable = false))
         }
     }
 
     private fun handleGetAttributes(playerId: UUID): Pair<ResponseStatus, Map<String, String>> {
         return withPlayer(playerId) { player ->
-            ResponseStatus.SUCCESS to mapOf("attributes" to JsonUtil.toJson(player.collectAttributes(), readable = false))
+            val attributes = player.attributes ?: return@withPlayer null
+            ResponseStatus.SUCCESS to mapOf("attributes" to JsonUtil.toJson(attributes, readable = false))
         } ?: NOT_FOUND_RESPONSE
     }
 
     private fun handlePotionEffects(playerId: UUID): Pair<ResponseStatus, Map<String, String>> {
         return withPlayer(playerId) { player ->
-            ResponseStatus.SUCCESS to mapOf("potionEffects" to JsonUtil.toJson(player.collectPotionEffects(), readable = false))
+            val potionEffects = player.potionEffects ?: return@withPlayer null
+            ResponseStatus.SUCCESS to mapOf("potionEffects" to JsonUtil.toJson(potionEffects, readable = false))
         } ?: NOT_FOUND_RESPONSE
     }
 
     private fun handleLocation(playerId: UUID): Pair<ResponseStatus, Map<String, String>> {
         return withPlayer(playerId) { player ->
-            ResponseStatus.SUCCESS to mapOf("location" to JsonUtil.toJson(LocationData.from(player.location), readable = false))
+            val location = player.location ?: return@withPlayer null
+            ResponseStatus.SUCCESS to mapOf("location" to JsonUtil.toJson(location, readable = false))
         } ?: NOT_FOUND_RESPONSE
     }
 
     private fun handleTotalTime(playerId: UUID): Pair<ResponseStatus, Map<String, String>> {
         return withPlayer(playerId) { player ->
-            ResponseStatus.SUCCESS to mapOf("totalTime" to timeTracker.getTotalPlayTime(player).toString())
+            val totalTime = player.totalTime(timeTracker) ?: return@withPlayer null
+            ResponseStatus.SUCCESS to mapOf("totalTime" to totalTime.toString())
         } ?: NOT_FOUND_RESPONSE
     }
 
     private fun handleLevel(playerId: UUID): Pair<ResponseStatus, Map<String, String>> {
         return withPlayer(playerId) { player ->
-            val level = expTracker.getExperience(player).first
+            val level = player.experience(expTracker)?.first ?: return@withPlayer null
             ResponseStatus.SUCCESS to mapOf("level" to level.toString())
         } ?: NOT_FOUND_RESPONSE
     }
 
     private fun handleTotalExp(playerId: UUID): Pair<ResponseStatus, Map<String, String>> {
         return withPlayer(playerId) { player ->
-            val totalExp = expTracker.getExperience(player).second
+            val totalExp = player.experience(expTracker)?.second ?: return@withPlayer null
             ResponseStatus.SUCCESS to mapOf("totalExp" to totalExp.toString())
         } ?: NOT_FOUND_RESPONSE
     }
 
     private fun handleCurrentExp(playerId: UUID): Pair<ResponseStatus, Map<String, String>> {
         return withPlayer(playerId) { player ->
-            val currentExp = expTracker.getExperience(player).third
+            val currentExp = player.experience(expTracker)?.third ?: return@withPlayer null
             ResponseStatus.SUCCESS to mapOf("currentExp" to currentExp.toString())
         } ?: NOT_FOUND_RESPONSE
     }
 
     private fun handleBlockInteractions(playerId: UUID): Pair<ResponseStatus, Map<String, String>> {
         return withPlayer(playerId) { player ->
-            val blockInteractions = blockTracker.getBlockInteractions(player)
+            val blockInteractions = player.blockInteractions(blockTracker) ?: return@withPlayer null
             ResponseStatus.SUCCESS to mapOf("blockInteractions" to JsonUtil.toJson(blockInteractions, readable = false))
         } ?: NOT_FOUND_RESPONSE
     }
 
     private fun handleBeds(playerId: UUID): Pair<ResponseStatus, Map<String, String>> {
         return withPlayer(playerId) { player ->
-            val beds = bedTracker.getBeds(player).map { LocationData.from(it) }
+            val beds = player.beds(bedTracker) ?: return@withPlayer null
             ResponseStatus.SUCCESS to mapOf("beds" to JsonUtil.toJson(beds, readable = false))
         } ?: NOT_FOUND_RESPONSE
     }
 
     private fun handleMovements(playerId: UUID): Pair<ResponseStatus, Map<String, String>> {
         return withPlayer(playerId) { player ->
-            val movements = movementTracker.getMovements(player)
+            val movements = player.movements(movementTracker) ?: return@withPlayer null
             ResponseStatus.SUCCESS to mapOf("movements" to JsonUtil.toJson(movements, readable = false))
         } ?: NOT_FOUND_RESPONSE
     }
 
     private fun handleGetFullData(playerId: UUID): Pair<ResponseStatus, Map<String, String>> {
         return withPlayer(playerId) { player ->
-            ResponseStatus.SUCCESS to mapOf("data" to jsonManager.createPlayerJson(player, readable = false))
+            val playerData = player.createPlayerJson(jsonManager) ?: return@withPlayer null
+            ResponseStatus.SUCCESS to mapOf("data" to playerData)
         } ?: NOT_FOUND_RESPONSE
     }
 
