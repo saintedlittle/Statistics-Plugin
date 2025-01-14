@@ -2,13 +2,14 @@ package com.github.saintedlittle.extensions
 
 import com.github.saintedlittle.data.PotionEffectData
 import org.bukkit.Material
+import org.bukkit.OfflinePlayer
 import org.bukkit.Statistic
 import org.bukkit.attribute.Attribute
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
 import org.bukkit.potion.PotionEffect
 
-fun Player.collectStatistics(): Map<String, Int> {
+fun OfflinePlayer.collectStatistics(): Map<String, Int> {
     val statisticsMap = mutableMapOf<String, Int>()
 
     Statistic.entries.forEach { statistic ->

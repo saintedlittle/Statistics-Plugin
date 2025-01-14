@@ -47,9 +47,14 @@ class PlayerEventListenerProvider @Inject constructor(
 class KafkaListenerProvider @Inject constructor(
     private val kafkaProducerService: KafkaProducerService,
     private val jsonManager: JsonManager,
+    private val timeTracker: PlayerTimeTracker,
+    private val expTracker: ExpTracker,
+    private val blockTracker: BlockTracker,
+    private val bedTracker: BedTracker,
+    private val movementTracker: MovementTracker,
     private val logger: Logger
 ) : Provider<KafkaListener> {
     override fun get(): KafkaListener {
-        return KafkaListener(kafkaProducerService, jsonManager, logger)
+        return KafkaListener(kafkaProducerService, jsonManager, timeTracker, expTracker, blockTracker, bedTracker, movementTracker, logger)
     }
 }
