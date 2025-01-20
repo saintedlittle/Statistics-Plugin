@@ -4,6 +4,7 @@ import com.github.saintedlittle.annotations.KafkaEvent
 import com.github.saintedlittle.application.ConfigManager
 import com.google.inject.Inject
 import org.apache.kafka.clients.consumer.ConsumerConfig
+import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.slf4j.Logger
 import java.time.Duration
@@ -13,44 +14,51 @@ class KafkaConsumerService @Inject constructor(
     private val logger: Logger
 ) {
     private val listeners = mutableMapOf<KafkaTopic, MutableList<(KafkaEventData) -> Unit>>()
-    private val consumer: KafkaConsumer<String, String>
-    private val thread: Thread
+    private var consumer: KafkaConsumer<String, String>?
+    private val thread: Thread?
+
+    private val isEnabled = configManager.config.getBoolean("kafka.enabled", true)
 
     init {
-        val props = configManager.kafkaConsumerConfig.apply {
-            put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "${this["ip"]}:${this["port"]}")
-        }
-        val classLoader = Thread.currentThread().contextClassLoader
-        try {
-            Thread.currentThread().contextClassLoader = null
-            consumer = KafkaConsumer(props)
-        } finally {
-            Thread.currentThread().contextClassLoader = classLoader
-        }
+        if (isEnabled) {
+            val props = configManager.kafkaConsumerConfig.apply {
+                put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "${this["ip"]}:${this["port"]}")
+            }
 
-        consumer.subscribe(KafkaTopic.entries.map { it.topicName })
-
-        thread = Thread {
+            val classLoader = Thread.currentThread().contextClassLoader
             try {
-                while (!Thread.currentThread().isInterrupted) {
-                    val records = consumer.poll(Duration.ofMillis(1000))
-                    for (record in records) {
-                        logger.debug("Received message: topic=${record.topic()}, key=${record.key()}, value=${record.value()}")
-                        triggerEvent(getTopic(record.topic()), record.key(), record.value())
+                Thread.currentThread().contextClassLoader = null
+                consumer = KafkaConsumer(props)
+            } finally {
+                Thread.currentThread().contextClassLoader = classLoader
+            }
+
+            consumer?.subscribe(KafkaTopic.entries.map { it.topicName })
+
+            thread = Thread {
+                try {
+                    while (!Thread.currentThread().isInterrupted) {
+                        val records = consumer?.poll(Duration.ofMillis(1000)) ?: ConsumerRecords.empty()
+                        for (record in records) {
+                            logger.debug("Received message: topic=${record.topic()}, key=${record.key()}, value=${record.value()}")
+                            triggerEvent(getTopic(record.topic()), record.key(), record.value())
+                        }
+                        Thread.sleep(100)
                     }
-                    Thread.sleep(100)
-                }
-            } catch (e: Exception) {
-                if (e is InterruptedException) {
+                } catch (e: InterruptedException) {
                     logger.debug("Kafka polling loop interrupted")
                     Thread.currentThread().interrupt()
-                } else {
+                } catch (e: Exception) {
                     logger.error("Error in Kafka polling loop", e)
                 }
             }
-        }
 
-        thread.start()
+            thread.start()
+        } else {
+            consumer = null
+            thread = null
+            logger.warn("Kafka is disabled!")
+        }
     }
 
     fun registerListener(listener: KafkaEventListener) {
@@ -68,8 +76,8 @@ class KafkaConsumerService @Inject constructor(
     }
 
     fun close() {
-        thread.interrupt()
-        consumer.close()
+        thread?.interrupt()
+        consumer?.close()
     }
 
     private fun triggerEvent(topic: KafkaTopic?, key: String, value: String) {

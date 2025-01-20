@@ -1,0 +1,13 @@
+{
+  "enabled": "true",
+  "nickname": "statistics_nickname",
+  "statistic": "statistics_statistic_%statistic%",
+  "attribute": "statistics_attribute_%attribute%",
+  "inventory_item": "statistics_inventory_item_%slot%",
+  "potion_effects": "statistics_potion_effects_%place%",
+  "location": "statistics_location_%param%",
+  "exp": "statistics_exp_%exp%",
+  "block_interactions": "statistics_block_interactions_%param%",
+  "movements": "statistics_movements_%world_param%",
+  "statistic_top": "statistics_top_statistic_%statistic_place%"
+}

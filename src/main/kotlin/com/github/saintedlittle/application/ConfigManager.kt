@@ -8,16 +8,19 @@ class ConfigManager(private val dataFolder: File) {
     val config: YamlConfiguration
 
     val kafkaProducerConfig: Properties
-        get() = getKafkaConfig("kafka-producer-config.json")
+        get() = getJSONConfig("kafka-producer-config.json")
 
     val kafkaConsumerConfig: Properties
-        get() = getKafkaConfig("kafka-consumer-config.json")
+        get() = getJSONConfig("kafka-consumer-config.json")
+
+    val placeholderConfig: Properties
+        get() = getJSONConfig("placeholder-config.json")
 
     init {
         config = loadOrCreate("config.yml")
     }
 
-    private fun getKafkaConfig(fileName: String): Properties {
+    private fun getJSONConfig(fileName: String): Properties {
         val file = ensureFileExists(fileName)
         val configMap: Map<String, String> = JsonUtil.fromJson(file.readText())
 

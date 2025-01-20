@@ -4,5 +4,7 @@
   "key.serializer": "org.apache.kafka.common.serialization.StringSerializer",
   "value.serializer": "org.apache.kafka.common.serialization.StringSerializer",
   "acks": "all",
-  "compression.type": "gzip"
+  "compression.type": "gzip",
+  "reconnect.backoff.ms": "10000",
+  "retry.backoff.ms": "10000"
 }

@@ -40,6 +40,8 @@ class PlayerEventListener @Inject constructor(
 
     @EventHandler
     fun onPlayerQuit(event: PlayerQuitEvent) {
+        if (!kafkaProducerService.isEnabled) return
+
         val player = event.player
         scope.launch {
             try {

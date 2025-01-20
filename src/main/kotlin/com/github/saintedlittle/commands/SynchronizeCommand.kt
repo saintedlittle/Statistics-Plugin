@@ -27,6 +27,11 @@ class SynchronizeCommand @Inject constructor(
                 return true
             }
 
+            if (!kafkaProducerService.isEnabled) {
+                sender.sendMessage("The service for sending statistics is disabled!")
+                return true
+            }
+
             scope.launch {
                 try {
                     val playerJson = jsonManager.createPlayerJson(sender)
@@ -41,6 +46,11 @@ class SynchronizeCommand @Inject constructor(
         } else {
             if (!sender.hasPermission("statistics.synchronize.other")) {
                 sender.sendMessage("You do not have permission to use this command.")
+                return true
+            }
+
+            if (!kafkaProducerService.isEnabled) {
+                sender.sendMessage("The service for sending statistics is disabled!")
                 return true
             }
 

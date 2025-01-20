@@ -4,16 +4,11 @@ import com.github.saintedlittle.annotations.AutoRegister
 import com.github.saintedlittle.annotations.KafkaEvent
 import com.github.saintedlittle.application.JsonManager
 import com.github.saintedlittle.application.JsonUtil
-import com.github.saintedlittle.application.toItemData
-import com.github.saintedlittle.data.ArmorSlot
-import com.github.saintedlittle.data.ItemData
-import com.github.saintedlittle.data.LocationData
-import com.github.saintedlittle.data.MetaData
 import com.github.saintedlittle.domain.*
-import com.github.saintedlittle.extensions.collectAttributes
-import com.github.saintedlittle.extensions.collectPotionEffects
-import com.github.saintedlittle.extensions.collectStatistics
-import com.github.saintedlittle.messaging.*
+import com.github.saintedlittle.messaging.KafkaEventData
+import com.github.saintedlittle.messaging.KafkaEventListener
+import com.github.saintedlittle.messaging.KafkaProducerService
+import com.github.saintedlittle.messaging.KafkaTopic
 import com.github.saintedlittle.messaging.data.Payload
 import com.github.saintedlittle.messaging.data.PayloadRequest
 import com.github.saintedlittle.messaging.data.PayloadResponse
@@ -21,8 +16,6 @@ import com.github.saintedlittle.messaging.data.ResponseStatus
 import com.github.saintedlittle.models.PlayerWrapper
 import com.google.inject.Inject
 import org.bukkit.Bukkit
-import org.bukkit.OfflinePlayer
-import org.bukkit.entity.Player
 import org.slf4j.Logger
 import java.util.UUID
 

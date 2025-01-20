@@ -3,6 +3,8 @@ version: '1.0-SNAPSHOT'
 main: com.github.saintedlittle.Main
 api-version: '1.20'
 
+softdepend: [PlaceholderAPI]
+
 commands:
   synchronize:
     description: Synchronize player data.
