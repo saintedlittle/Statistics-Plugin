@@ -2,7 +2,7 @@ package com.github.saintedlittle.domain
 
 import org.bukkit.entity.Player
 import org.ehcache.Cache
-import java.util.*
+import java.util.UUID
 import kotlin.math.pow
 
 class ExpTracker(

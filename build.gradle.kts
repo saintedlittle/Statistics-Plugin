@@ -15,6 +15,9 @@ repositories {
     maven("https://oss.sonatype.org/content/groups/public/") {
         name = "sonatype"
     }
+    maven("https://repo.extendedclip.com/content/repositories/placeholderapi/") {
+        name = "placeholderapi"
+    }
 }
 
 dependencies {
@@ -22,6 +25,7 @@ dependencies {
     implementation("org.reflections:reflections:0.10.2")
 
     compileOnly("io.papermc.paper:paper-api:1.20.1-R0.1-SNAPSHOT")
+    compileOnly("me.clip:placeholderapi:2.11.6")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.10")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
