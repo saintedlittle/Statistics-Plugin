@@ -1,1 +1,7 @@
+kafka:
+  enabled: true
+
+placeholder:
+  undefined: "Undefined"
+
 minDistanceBetweenMovements: 2.0

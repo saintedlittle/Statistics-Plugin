@@ -11,20 +11,24 @@ class KafkaProducerService @Inject constructor(
     configManager: ConfigManager,
     private val logger: Logger
 ) {
-    private val producer: KafkaProducer<String, String>
+    private var producer: KafkaProducer<String, String>?
+
+    val isEnabled = configManager.config.getBoolean("kafka.enabled", true)
 
     init {
-        val props = configManager.kafkaProducerConfig.apply {
-            put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "${this["ip"]}:${this["port"]}")
-        }
-        // ConfigException: Invalid value StringSerializer for configuration key.serializer: Class StringSerializer could not be found.
-        val classLoader = Thread.currentThread().contextClassLoader
-        try {
-            Thread.currentThread().contextClassLoader = null
-            producer = KafkaProducer(props)
-        } finally {
-            Thread.currentThread().contextClassLoader = classLoader
-        }
+        if (isEnabled) {
+            val props = configManager.kafkaProducerConfig.apply {
+                put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "${this["ip"]}:${this["port"]}")
+            }
+            // ConfigException: Invalid value StringSerializer for configuration key.serializer: Class StringSerializer could not be found.
+            val classLoader = Thread.currentThread().contextClassLoader
+            try {
+                Thread.currentThread().contextClassLoader = null
+                producer = KafkaProducer(props)
+            } finally {
+                Thread.currentThread().contextClassLoader = classLoader
+            }
+        } else producer = null
     }
 
     private enum class KafkaTopic(val topicName: String) {
@@ -51,13 +55,15 @@ class KafkaProducerService @Inject constructor(
     }
 
     fun close() {
-        producer.close()
+        producer?.close()
     }
 
     private fun sendMessage(topic: KafkaTopic, key: String, message: String) {
+        if (!isEnabled) return
+
         try {
             val record = ProducerRecord(topic.topicName, key, message)
-            producer.send(record) { metadata, exception ->
+            producer?.send(record) { metadata, exception ->
                 if (exception != null) {
                     logger.error("Failed to send message to topic ${topic.topicName}", exception)
                 } else {

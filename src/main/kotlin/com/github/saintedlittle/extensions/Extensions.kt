@@ -88,3 +88,15 @@ fun PotionEffect.toPotionEffectData(): PotionEffectData {
         duration = duration
     )
 }
+
+fun String.splitFromEnd(separator: Char, limit: Int = Int.MAX_VALUE): List<String> {
+    if (limit <= 0) return listOf(this)
+
+    val parts = this.split(separator)
+    return if (limit >= parts.size) parts
+    else {
+        val suffix = parts.takeLast(limit - 1)
+        val prefix = parts.dropLast(limit - 1).joinToString(separator.toString())
+        listOf(prefix) + suffix
+    }
+}
